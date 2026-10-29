@@ -32,7 +32,7 @@ Se publica como **PWA**: se puede instalar en el celular desde el navegador y co
 - Registro de las acciones importantes del administrador.
 
 ### Base de datos (MySQL)
-MySQL 9 instalado en la computadora de desarrollo, base `pide_cerca_dab`. Spring Boot crea y actualiza las tablas automáticamente. El script completo está en `database/schema.sql`.
+MySQL 9 instalado en la computadora de desarrollo, base `pide_cerca_db`. Spring Boot crea y actualiza las tablas automáticamente. El script completo está en `database/schema.sql`.
 
 ## 3. Roles
 

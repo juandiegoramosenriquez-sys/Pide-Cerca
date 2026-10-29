@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS pide_cerca_dab CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS pide_cerca_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-USE pide_cerca_dab;
+USE pide_cerca_db;
 
 CREATE TABLE IF NOT EXISTS usuario (
     id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
