@@ -1,5 +1,6 @@
 package com.pidecerca.backend.dto;
 
+import com.pidecerca.backend.entity.Limites;
 import com.pidecerca.backend.entity.Usuario;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,7 @@ public class UsuarioResponse {
     private String rol;
     private Boolean activo;
     private LocalDateTime fechaRegistro;
+    private LocalDateTime proximoCambioPassword;
 
     public UsuarioResponse() {
     }
@@ -39,7 +41,7 @@ public class UsuarioResponse {
     }
 
     public static UsuarioResponse de(Usuario usuario) {
-        return new UsuarioResponse(
+        UsuarioResponse r = new UsuarioResponse(
                 usuario.getId(),
                 usuario.getNombre(),
                 usuario.getApellido(),
@@ -49,6 +51,8 @@ public class UsuarioResponse {
                 usuario.getActivo(),
                 usuario.getFechaRegistro()
         );
+        r.proximoCambioPassword = Limites.proximoCambio(usuario.getFechaCambioPassword());
+        return r;
     }
 
     public static UsuarioResponse protegido(Usuario usuario) {
@@ -90,6 +94,10 @@ public class UsuarioResponse {
 
     public Boolean getActivo() {
         return activo;
+    }
+
+    public LocalDateTime getProximoCambioPassword() {
+        return proximoCambioPassword;
     }
 
     public LocalDateTime getFechaRegistro() {

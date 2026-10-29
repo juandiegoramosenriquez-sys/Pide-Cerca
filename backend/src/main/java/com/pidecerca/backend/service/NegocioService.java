@@ -3,6 +3,7 @@ package com.pidecerca.backend.service;
 import com.pidecerca.backend.dto.CrearNegocioRequest;
 import com.pidecerca.backend.dto.RegistroNegocioRequest;
 import com.pidecerca.backend.entity.EstadoAprobacion;
+import com.pidecerca.backend.entity.Limites;
 import com.pidecerca.backend.entity.Negocio;
 import com.pidecerca.backend.entity.Rol;
 import com.pidecerca.backend.entity.Usuario;
@@ -232,6 +233,17 @@ public class NegocioService {
     public Negocio actualizarMio(Usuario usuario, Negocio datos) {
 
         Negocio negocio = obtenerDelPropietario(usuario);
+        String nombreNuevo = AuthService.texto(datos.getNombre());
+        boolean cambiaNombre = nombreNuevo != null && !nombreNuevo.equals(negocio.getNombre());
+
+        if (cambiaNombre) {
+            LocalDateTime proximo = Limites.proximoCambio(negocio.getFechaCambioNombre());
+            if (proximo != null) {
+                throw ApiException.solicitudInvalida(
+                        "Ya cambiaste el nombre hace poco. Podrás cambiarlo desde el " + Limites.fechaLegible(proximo));
+            }
+            negocio.setFechaCambioNombre(LocalDateTime.now());
+        }
         copiarDatos(datos, negocio);
 
         if (datos.getAbierto() != null) {

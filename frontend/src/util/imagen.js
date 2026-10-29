@@ -23,7 +23,7 @@ function cargar(archivo) {
   })
 }
 
-export async function comprimir(archivo, lado = 900) {
+export async function comprimir(archivo, lado = 800) {
   if (!archivo.type.startsWith('image/')) throw new Error('Elige una foto')
   const img = await cargar(archivo)
   const escala = Math.min(1, lado / Math.max(img.width, img.height))
@@ -31,7 +31,7 @@ export async function comprimir(archivo, lado = 900) {
   lienzo.width = Math.round(img.width * escala)
   lienzo.height = Math.round(img.height * escala)
   lienzo.getContext('2d').drawImage(img, 0, 0, lienzo.width, lienzo.height)
-  return lienzo.toDataURL('image/jpeg', 0.82)
+  return lienzo.toDataURL('image/jpeg', 0.75)
 }
 
 export async function subirFoto(archivo) {

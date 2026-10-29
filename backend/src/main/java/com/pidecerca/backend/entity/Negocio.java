@@ -1,5 +1,6 @@
 package com.pidecerca.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
@@ -47,6 +48,9 @@ public class Negocio {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaSolicitud;
+
+    @JsonIgnore
+    private LocalDateTime fechaCambioNombre;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Boolean ubicacionEnVivo;
@@ -208,6 +212,19 @@ public class Negocio {
 
     public void setUbicacionActualizada(LocalDateTime ubicacionActualizada) {
         this.ubicacionActualizada = ubicacionActualizada;
+    }
+
+    public LocalDateTime getFechaCambioNombre() {
+        return fechaCambioNombre;
+    }
+
+    public void setFechaCambioNombre(LocalDateTime fechaCambioNombre) {
+        this.fechaCambioNombre = fechaCambioNombre;
+    }
+
+    @JsonProperty(value = "proximoCambioNombre", access = JsonProperty.Access.READ_ONLY)
+    public LocalDateTime getProximoCambioNombre() {
+        return Limites.proximoCambio(fechaCambioNombre);
     }
 
     public boolean estaAprobado() {

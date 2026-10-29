@@ -4,6 +4,7 @@ import com.pidecerca.backend.dto.CambiarPasswordRequest;
 import com.pidecerca.backend.dto.PerfilRequest;
 import com.pidecerca.backend.dto.RegistroRequest;
 import com.pidecerca.backend.dto.UsuarioRequest;
+import com.pidecerca.backend.entity.Limites;
 import com.pidecerca.backend.entity.Rol;
 import com.pidecerca.backend.entity.Usuario;
 import com.pidecerca.backend.exception.ApiException;
@@ -183,6 +184,13 @@ public class UsuarioService {
 
     public void cambiarPassword(Usuario usuario, CambiarPasswordRequest request) {
 
+        java.time.LocalDateTime proximo = Limites.proximoCambio(usuario.getFechaCambioPassword());
+
+        if (proximo != null) {
+            throw ApiException.solicitudInvalida(
+                    "Ya cambiaste tu contraseña hace poco. Podrás cambiarla desde el " + Limites.fechaLegible(proximo));
+        }
+
         if (request.getPasswordActual() == null
                 || !passwordEncoder.matches(request.getPasswordActual(), usuario.getPassword())) {
             throw ApiException.solicitudInvalida("La contraseña actual es incorrecta");
@@ -193,6 +201,7 @@ public class UsuarioService {
         }
 
         usuario.setPassword(passwordEncoder.encode(request.getNuevaPassword()));
+        usuario.setFechaCambioPassword(java.time.LocalDateTime.now());
         usuarioRepository.save(usuario);
     }
 }

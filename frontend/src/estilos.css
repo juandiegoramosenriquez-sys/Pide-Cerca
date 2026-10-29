@@ -1566,3 +1566,80 @@ p {
 .tab-arriba {
   transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
 }
+
+.segmento {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  background: var(--tarj-2);
+}
+
+.segmento button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--t2);
+  font-weight: 800;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.segmento button.activo {
+  background: var(--tarj);
+  color: var(--t1);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
+}
+
+.perfil-cabecera {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  background: var(--destacada);
+  color: var(--destacada-t);
+  min-height: 150px;
+  display: flex;
+  align-items: flex-end;
+  border: 1px solid var(--borde);
+}
+
+.perfil-cabecera > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-cabecera.con-foto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, 0.7));
+}
+
+.perfil-cabecera-texto {
+  position: relative;
+  z-index: 1;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.perfil-cabecera.con-foto .perfil-cabecera-texto {
+  color: #FFFFFF;
+}
+
+.perfil-cabecera .estado {
+  background: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}

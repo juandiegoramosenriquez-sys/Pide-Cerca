@@ -35,6 +35,8 @@ public class Usuario {
 
     private LocalDateTime fechaPrivacidad;
 
+    private LocalDateTime fechaCambioPassword;
+
     public Usuario() {
     }
 
@@ -116,6 +118,14 @@ public class Usuario {
 
     public void setAceptoPrivacidad(Boolean aceptoPrivacidad) {
         this.aceptoPrivacidad = aceptoPrivacidad;
+    }
+
+    public LocalDateTime getFechaCambioPassword() {
+        return fechaCambioPassword;
+    }
+
+    public void setFechaCambioPassword(LocalDateTime fechaCambioPassword) {
+        this.fechaCambioPassword = fechaCambioPassword;
     }
 
     public LocalDateTime getFechaPrivacidad() {

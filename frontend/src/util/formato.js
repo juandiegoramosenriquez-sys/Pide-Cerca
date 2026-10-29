@@ -69,3 +69,8 @@ export function nombreCorto(usuario) {
 export function esActivo(estado) {
   return ['PENDIENTE', 'ACEPTADO', 'EN_PREPARACION', 'LISTO_PARA_RECOGER'].includes(estado)
 }
+
+export function fechaLarga(valor) {
+  if (!valor) return ''
+  return new Date(valor).toLocaleDateString('es-PE', { day: 'numeric', month: 'long' })
+}
