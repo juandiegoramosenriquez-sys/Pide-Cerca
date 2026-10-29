@@ -1,5 +1,6 @@
 package com.pidecerca.backend.controller;
 
+import com.pidecerca.backend.dto.CodigoRequest;
 import com.pidecerca.backend.dto.CrearPedidoRequest;
 import com.pidecerca.backend.dto.MotivoRequest;
 import com.pidecerca.backend.dto.TiempoRequest;
@@ -67,8 +68,8 @@ public class PedidoController {
     }
 
     @PostMapping("/{id}/recogido")
-    public Pedido marcarRecogido(@PathVariable Long id) {
-        return pedidoService.marcarRecogido(usuarioActualService.obtener(), id);
+    public Pedido marcarRecogido(@PathVariable Long id, @RequestBody(required = false) CodigoRequest request) {
+        return pedidoService.marcarRecogido(usuarioActualService.obtener(), id, request == null ? null : request.codigo());
     }
 
     @PostMapping("/{id}/rechazar")

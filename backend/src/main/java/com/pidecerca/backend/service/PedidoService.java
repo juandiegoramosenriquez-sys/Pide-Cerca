@@ -11,6 +11,7 @@ import com.pidecerca.backend.repository.ProductoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
@@ -143,6 +144,7 @@ public class PedidoService {
         }
 
         Pedido pedido = new Pedido();
+        pedido.setCodigo(nuevoCodigo());
         pedido.setFecha(LocalDateTime.now());
         pedido.setEstado(EstadoPedido.PENDIENTE);
         pedido.setUsuario(cliente);
@@ -277,11 +279,21 @@ public class PedidoService {
         return guardado;
     }
 
+    private static final SecureRandom AZAR = new SecureRandom();
+
+    public static String nuevoCodigo() {
+        return String.format("%04d", AZAR.nextInt(10000));
+    }
+
     @Transactional
-    public Pedido marcarRecogido(Usuario usuario, Long id) {
+    public Pedido marcarRecogido(Usuario usuario, Long id, String codigo) {
 
         Pedido pedido = obtenerParaNegocio(usuario, id);
         validarEstado(pedido, EstadoPedido.LISTO_PARA_RECOGER, "El pedido todavía no está listo");
+
+        if (pedido.getCodigo() != null && !pedido.getCodigo().equals(codigo == null ? null : codigo.trim())) {
+            throw ApiException.solicitudInvalida("El código no coincide. Pídeselo otra vez al cliente");
+        }
 
         pedido.setEstado(EstadoPedido.RECOGIDO);
         pedido.setFechaRecogido(LocalDateTime.now());

@@ -15,7 +15,7 @@ function pasoDe(estado) {
 
 function mensaje(pedido) {
   if (pedido.estado === 'PENDIENTE') return 'Esperando que el puesto acepte tu pedido'
-  if (pedido.estado === 'LISTO_PARA_RECOGER') return '¡Listo! Acércate al puesto y di tu número'
+  if (pedido.estado === 'LISTO_PARA_RECOGER') return '¡Listo! Acércate y di tu código'
   if (pedido.estado === 'RECOGIDO') return '¡Buen provecho! Gracias por usar PideCerca'
   if (pedido.estado === 'CANCELADO') return pedido.motivoCancelacion ? `Cancelado: ${pedido.motivoCancelacion}` : 'Pedido cancelado'
   const faltan = minutosRestantes(pedido)
@@ -79,6 +79,16 @@ export function SeguimientoPedido() {
         <span className="numero-grande" style={{ fontSize: 56 }}>#{pedido.id}</span>
         <Estado estado={pedido.estado} />
         <p style={{ fontWeight: 700, marginTop: 4 }}>{mensaje(pedido)}</p>
+        {pedido.codigo && esActivo(pedido.estado) && (
+          <div className="codigo-entrega">
+            <span>Código de entrega</span>
+            <div className="codigo-digitos" aria-label={'Código ' + pedido.codigo}>
+              {pedido.codigo.split('').map((d, i) => (
+                <b key={i}>{d}</b>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {pedido.estado !== 'CANCELADO' && (

@@ -31,6 +31,9 @@ public class Pedido {
 
     private String notas;
 
+    @Column(length = 4)
+    private String codigo;
+
     private String motivoCancelacion;
 
     @ManyToOne
@@ -117,6 +120,14 @@ public class Pedido {
 
     public void setFechaRecogido(LocalDateTime fechaRecogido) {
         this.fechaRecogido = fechaRecogido;
+    }
+
+    public String getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(String codigo) {
+        this.codigo = codigo;
     }
 
     public String getNotas() {

@@ -41,6 +41,7 @@ function TarjetaPedido({ pedido, ahora }) {
   const [minutos, setMinutos] = useState(pedido.tiempoPreparacion || negocio.tiempoEstimado || 15)
   const [rechazando, setRechazando] = useState(false)
   const [motivo, setMotivo] = useState(MOTIVOS[0])
+  const [codigo, setCodigo] = useState('')
   const grupo = ESTADOS[pedido.estado]?.clase
 
   async function ejecutar(accion, mensaje) {
@@ -62,7 +63,12 @@ function TarjetaPedido({ pedido, ahora }) {
     }, `Pedido #${pedido.id} aceptado. ¡A cocinar!`)
 
   const listo = () => ejecutar(() => api(`/pedidos/${pedido.id}/listo`, { metodo: 'POST' }), `Le avisamos al cliente que el #${pedido.id} está listo`)
-  const entregado = () => ejecutar(() => api(`/pedidos/${pedido.id}/recogido`, { metodo: 'POST' }), `Pedido #${pedido.id} entregado`)
+  const pideCodigo = Boolean(pedido.codigo)
+  const codigoListo = !pideCodigo || codigo.length === 4
+  const entregado = () => {
+    if (!codigoListo) return mostrar('Escribe el código de 4 números')
+    ejecutar(() => api(`/pedidos/${pedido.id}/recogido`, { metodo: 'POST', cuerpo: { codigo } }), `Pedido #${pedido.id} entregado`)
+  }
   const masTiempo = () =>
     ejecutar(
       () => api(`/pedidos/${pedido.id}/tiempo`, { metodo: 'PUT', cuerpo: { minutos: (pedido.tiempoPreparacion || 15) + 5 } }),
@@ -146,8 +152,24 @@ function TarjetaPedido({ pedido, ahora }) {
 
       {grupo === 'ok' && (
         <>
-          <div className="aviso info">Entrega al decir #{pedido.id}</div>
-          <button className="boton principal ancho" onClick={entregado} disabled={ocupado}>
+          {pideCodigo ? (
+            <div className="campo">
+              <label htmlFor={`codigo-${pedido.id}`}>Código que te dice el cliente</label>
+              <input
+                id={`codigo-${pedido.id}`}
+                className="codigo-entrada"
+                inputMode="numeric"
+                autoComplete="off"
+                maxLength={4}
+                placeholder="• • • •"
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              />
+            </div>
+          ) : (
+            <div className="aviso info">Entrega al decir #{pedido.id}</div>
+          )}
+          <button className="boton principal ancho" onClick={entregado} disabled={ocupado || !codigoListo}>
             {ocupado ? <Loader2 className="giro" size={22} /> : <Check size={22} />}
             Entregado al cliente
           </button>

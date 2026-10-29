@@ -1643,3 +1643,52 @@ p {
   background: #FFFFFF;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
+
+.codigo-entrega {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px dashed rgba(255, 255, 255, 0.55);
+}
+
+.codigo-entrega span {
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.codigo-digitos {
+  display: flex;
+  gap: 8px;
+}
+
+.codigo-digitos b {
+  width: 50px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #FFFFFF;
+  color: #1A1A1A;
+  font-size: 34px;
+  font-weight: 900;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  animation: aparecer 0.4s ease both;
+}
+
+.codigo-digitos b:nth-child(2) { animation-delay: 0.06s; }
+.codigo-digitos b:nth-child(3) { animation-delay: 0.12s; }
+.codigo-digitos b:nth-child(4) { animation-delay: 0.18s; }
+
+.codigo-entrada {
+  text-align: center;
+  font-size: 30px !important;
+  font-weight: 900;
+  letter-spacing: 14px;
+  height: 64px;
+}

@@ -2,6 +2,7 @@ package com.pidecerca.backend.config;
 
 import com.pidecerca.backend.entity.*;
 import com.pidecerca.backend.repository.*;
+import com.pidecerca.backend.service.PedidoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -183,6 +184,7 @@ public class DataInitializer implements CommandLineRunner {
         LocalDateTime fecha = LocalDateTime.now().minusMinutes(minutosAtras);
 
         Pedido pedido = new Pedido();
+        pedido.setCodigo(PedidoService.nuevoCodigo());
         pedido.setNegocio(negocio);
         pedido.setUsuario(cliente);
         pedido.setFecha(fecha);
