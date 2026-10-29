@@ -1,6 +1,7 @@
 package com.pidecerca.backend.controller;
 
 import com.pidecerca.backend.dto.CrearNegocioRequest;
+import com.pidecerca.backend.dto.UbicacionRequest;
 import com.pidecerca.backend.entity.Negocio;
 import com.pidecerca.backend.service.NegocioService;
 import com.pidecerca.backend.service.RegistroAccionService;
@@ -37,9 +38,10 @@ public class NegocioController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String tipo,
             @RequestParam(required = false) Double lat,
-            @RequestParam(required = false) Double lng) {
+            @RequestParam(required = false) Double lng,
+            @RequestParam(required = false) Double radio) {
 
-        return negocioService.buscar(q, tipo, lat, lng);
+        return negocioService.buscar(q, tipo, lat, lng, radio);
     }
 
     @GetMapping("/todos")
@@ -65,6 +67,12 @@ public class NegocioController {
     @PutMapping("/mio")
     public Negocio actualizarMiNegocio(@RequestBody Negocio negocio) {
         return negocioService.actualizarMio(usuarioActualService.obtener(), negocio);
+    }
+
+    @PutMapping("/mio/ubicacion")
+    public Negocio actualizarUbicacion(@RequestBody UbicacionRequest request) {
+        return negocioService.actualizarUbicacion(
+                usuarioActualService.obtener(), request.latitud(), request.longitud(), request.enVivo());
     }
 
     @PutMapping("/mio/abierto")

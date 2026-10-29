@@ -2,9 +2,45 @@ import { useState } from 'react'
 import { MapPin } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
+import Mapa from '../../componentes/Mapa'
 import MiCuenta from '../../componentes/MiCuenta'
-import { BotonCarga, Error } from '../../componentes/Ui'
+import { BotonCarga, Error, Interruptor } from '../../componentes/Ui'
+import { haceCuanto } from '../../util/formato'
 import { useNegocio } from './Negocio'
+
+function UbicacionEnVivo() {
+  const { negocio, compartir, setCompartir, errorGps } = useNegocio()
+  const mostrar = useAviso()
+  const transmitiendo = compartir && negocio.abierto
+
+  return (
+    <section className="tarjeta columna">
+      <div className="fila entre" style={{ alignItems: 'flex-start' }}>
+        <div>
+          <h2>Ubicación en vivo</h2>
+          <p className="sub">Si tu puesto se mueve (carretilla), los clientes verán dónde estás en el mapa mientras tengas el puesto abierto.</p>
+        </div>
+        <Interruptor
+          encendido={compartir}
+          etiqueta="Compartir mi ubicación en vivo"
+          alCambiar={() => {
+            setCompartir(!compartir)
+            mostrar(!compartir ? 'Compartirás tu ubicación mientras tu puesto esté abierto' : 'Dejaste de compartir tu ubicación')
+          }}
+        />
+      </div>
+      {transmitiendo && <span className="en-vivo">Compartiendo · actualizada {haceCuanto(negocio.ubicacionActualizada) || 'en un momento'}</span>}
+      {compartir && !negocio.abierto && <div className="aviso alerta">Abre tu puesto (botón de arriba) para empezar a compartir tu ubicación.</div>}
+      {errorGps && <div className="aviso error">{errorGps}</div>}
+      {negocio.latitud != null && negocio.longitud != null ? (
+        <Mapa puestos={[negocio]} alto={220} />
+      ) : (
+        <p className="mini">Todavía no hay ubicación guardada. Usa el botón “Usar mi ubicación” de abajo o activa la ubicación en vivo.</p>
+      )}
+      <p className="mini">Mantén esta web abierta en tu celular para que la ubicación se actualice.</p>
+    </section>
+  )
+}
 
 export default function MiPuesto() {
   const { negocio, setNegocio } = useNegocio()
@@ -71,6 +107,7 @@ export default function MiPuesto() {
   return (
     <>
       <h1>Mi puesto</h1>
+      <UbicacionEnVivo />
       <form className="tarjeta formulario" onSubmit={guardar}>
         <Error>{error}</Error>
         <div className="dos">

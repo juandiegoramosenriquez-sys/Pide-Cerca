@@ -48,6 +48,12 @@ public class Negocio {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private LocalDateTime fechaSolicitud;
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Boolean ubicacionEnVivo;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private LocalDateTime ubicacionActualizada;
+
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     @JsonIgnoreProperties({"correo", "telefono", "password", "rol", "activo", "fechaRegistro", "aceptoPrivacidad", "fechaPrivacidad"})
@@ -186,6 +192,22 @@ public class Negocio {
 
     public void setFechaSolicitud(LocalDateTime fechaSolicitud) {
         this.fechaSolicitud = fechaSolicitud;
+    }
+
+    public Boolean getUbicacionEnVivo() {
+        return ubicacionEnVivo;
+    }
+
+    public void setUbicacionEnVivo(Boolean ubicacionEnVivo) {
+        this.ubicacionEnVivo = ubicacionEnVivo;
+    }
+
+    public LocalDateTime getUbicacionActualizada() {
+        return ubicacionActualizada;
+    }
+
+    public void setUbicacionActualizada(LocalDateTime ubicacionActualizada) {
+        this.ubicacionActualizada = ubicacionActualizada;
     }
 
     public boolean estaAprobado() {

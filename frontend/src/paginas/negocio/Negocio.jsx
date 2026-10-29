@@ -69,6 +69,66 @@ export default function NegocioArea() {
   }, [])
 
   const aprobado = negocio?.estadoAprobacion === 'APROBADO'
+  const [compartir, setCompartirEstado] = useState(() => {
+    try {
+      return localStorage.getItem('pidecerca_en_vivo') === 'si'
+    } catch {
+      return false
+    }
+  })
+  const [errorGps, setErrorGps] = useState('')
+  const ultimoEnvio = useRef({ t: 0, lat: null, lng: null })
+
+  const setCompartir = useCallback(
+    async (valor) => {
+      setCompartirEstado(valor)
+      setErrorGps('')
+      try {
+        localStorage.setItem('pidecerca_en_vivo', valor ? 'si' : 'no')
+      } catch {
+        setErrorGps('')
+      }
+      if (!valor) {
+        try {
+          setNegocio(await api('/negocios/mio/ubicacion', { metodo: 'PUT', cuerpo: { enVivo: false } }))
+        } catch {
+          return
+        }
+      }
+    },
+    []
+  )
+
+  const activo = aprobado && compartir && negocio?.abierto
+
+  useEffect(() => {
+    if (!activo) return
+    if (!navigator.geolocation) {
+      setErrorGps('Tu navegador no permite usar el GPS')
+      return
+    }
+    const vigilancia = navigator.geolocation.watchPosition(
+      async (p) => {
+        const { latitude: lat, longitude: lng } = p.coords
+        const anterior = ultimoEnvio.current
+        const movio = anterior.lat === null || Math.abs(anterior.lat - lat) > 0.00012 || Math.abs(anterior.lng - lng) > 0.00012
+        if (!movio && Date.now() - anterior.t < 60000) return
+        ultimoEnvio.current = { t: Date.now(), lat, lng }
+        try {
+          setNegocio(await api('/negocios/mio/ubicacion', { metodo: 'PUT', cuerpo: { latitud: lat, longitud: lng, enVivo: true } }))
+          setErrorGps('')
+        } catch (e) {
+          setErrorGps(e.message)
+        }
+      },
+      (e) =>
+        setErrorGps(
+          e.code === 1 ? 'Diste "No permitir" al GPS. Actívalo junto a la dirección de la página para compartir tu ubicación' : 'No pudimos obtener tu ubicación'
+        ),
+      { enableHighAccuracy: true, maximumAge: 15000, timeout: 30000 }
+    )
+    return () => navigator.geolocation.clearWatch(vigilancia)
+  }, [activo])
 
   const recargar = useCallback(async () => {
     if (!aprobado) return
@@ -128,7 +188,9 @@ export default function NegocioArea() {
   ]
 
   return (
-    <NegocioContexto.Provider value={{ negocio, setNegocio, pedidos, cargandoPedidos, recargar, reemplazar, recientes, setAlerta }}>
+    <NegocioContexto.Provider
+      value={{ negocio, setNegocio, pedidos, cargandoPedidos, recargar, reemplazar, recientes, setAlerta, compartir, setCompartir, errorGps }}
+    >
       <Marco
         rol="negocio"
         enlaces={enlaces}

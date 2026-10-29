@@ -47,6 +47,10 @@ public class NegocioService {
     }
 
     public List<Negocio> buscar(String texto, String tipo, Double latitud, Double longitud) {
+        return buscar(texto, tipo, latitud, longitud, null);
+    }
+
+    public List<Negocio> buscar(String texto, String tipo, Double latitud, Double longitud, Double radio) {
 
         String filtro = normalizar(texto);
         String filtroTipo = normalizar(tipo);
@@ -69,6 +73,8 @@ public class NegocioService {
             });
 
             return negocios.stream()
+                    .filter(n -> radio == null || radio <= 0
+                            || (n.getDistanciaMetros() != null && n.getDistanciaMetros() <= radio))
                     .sorted(Comparator
                             .comparing((Negocio n) -> !Boolean.TRUE.equals(n.getAbierto()))
                             .thenComparing(n -> n.getDistanciaMetros() == null
@@ -248,6 +254,32 @@ public class NegocioService {
         }
 
         negocio.setAbierto(abierto);
+
+        if (!abierto) {
+            negocio.setUbicacionEnVivo(false);
+        }
+
+        return negocioRepository.save(negocio);
+    }
+
+    public Negocio actualizarUbicacion(Usuario usuario, Double latitud, Double longitud, Boolean enVivo) {
+
+        Negocio negocio = obtenerDelPropietario(usuario);
+
+        if (latitud != null || longitud != null) {
+            if (latitud == null || longitud == null
+                    || latitud < -90 || latitud > 90 || longitud < -180 || longitud > 180) {
+                throw ApiException.solicitudInvalida("La ubicación no es válida");
+            }
+            negocio.setLatitud(latitud);
+            negocio.setLongitud(longitud);
+            negocio.setUbicacionActualizada(LocalDateTime.now());
+        }
+
+        if (enVivo != null) {
+            negocio.setUbicacionEnVivo(enVivo);
+        }
+
         return negocioRepository.save(negocio);
     }
 

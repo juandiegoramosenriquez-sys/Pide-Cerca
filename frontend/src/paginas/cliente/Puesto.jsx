@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Clock, MapPin, Plus } from 'lucide-react'
+import { ArrowLeft, Clock, MapPin, Navigation, Plus } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
+import Mapa, { enlaceComoLlegar } from '../../componentes/Mapa'
 import { Cargando, Error, Modal } from '../../componentes/Ui'
-import { iniciales, soles } from '../../util/formato'
+import { haceCuanto, iniciales, soles } from '../../util/formato'
+
+function puntoGuardado() {
+  try {
+    const p = JSON.parse(localStorage.getItem('pidecerca_punto'))
+    return p && p.nombre === 'Mi ubicación' ? p : null
+  } catch {
+    return null
+  }
+}
 import { useCliente } from './Cliente'
 
 export default function Puesto() {
@@ -27,6 +37,15 @@ export default function Puesto() {
         setProductos(p)
       })
       .catch((e) => setError(e.message))
+  }, [id])
+
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      api(`/negocios/${id}`)
+        .then(setNegocio)
+        .catch(() => {})
+    }, 15000)
+    return () => clearInterval(intervalo)
   }, [id])
 
   const categorias = useMemo(() => [...new Set(productos.map((p) => p.categoria?.nombre || 'Otros'))], [productos])
@@ -81,6 +100,24 @@ export default function Puesto() {
       </section>
 
       {!puedePedir && <div className="aviso alerta">Este puesto está cerrado ahora. Puedes ver su menú, pero no hacer pedidos.</div>}
+
+      {negocio.latitud != null && negocio.longitud != null && (
+        <section className="tarjeta columna" style={{ gap: 10, padding: 12 }}>
+          <div className="fila entre envolver" style={{ padding: '0 4px' }}>
+            <h2>¿Dónde está?</h2>
+            {negocio.ubicacionEnVivo && negocio.abierto ? (
+              <span className="en-vivo">En vivo · {haceCuanto(negocio.ubicacionActualizada)}</span>
+            ) : (
+              <span className="mini">Ubicación fija del puesto</span>
+            )}
+          </div>
+          <Mapa puestos={[negocio]} yo={puntoGuardado()} alto={240} />
+          <a className="boton secundario ancho" href={enlaceComoLlegar(negocio.latitud, negocio.longitud)} target="_blank" rel="noreferrer">
+            <Navigation size={20} />
+            Cómo llegar
+          </a>
+        </section>
+      )}
 
       {categorias.length > 1 && (
         <div className="chips">
