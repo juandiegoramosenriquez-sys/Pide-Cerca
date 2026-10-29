@@ -38,8 +38,8 @@ Modo claro con degradado y modo oscuro neón. Textos de 16 px, botones de 52 px 
 ## Avance
 
 - [x] Paso 0: Repositorio y estructura
-- [ ] Paso 1: Crear el proyecto Spring Boot
-- [ ] Paso 2: Backend (entidades, seguridad, pedidos, aprobación de puestos)
+- [x] Paso 1: Crear el proyecto Spring Boot
+- [x] Paso 2: Backend (entidades, seguridad, pedidos, aprobación de puestos)
 - [ ] Paso 3: Crear el proyecto React
 - [ ] Paso 4: Base del diseño (colores, letras, botones)
 - [ ] Paso 5: Pantallas del cliente
