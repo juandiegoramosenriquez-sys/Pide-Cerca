@@ -6,7 +6,7 @@ Spring Boot 4 con Java 21 y Maven. Base de datos MySQL.
 
 1. Abre `backend/secrets.properties`. Este archivo no se sube a GitHub. Si no existe, copia `secrets.example.properties` con ese nombre.
 2. En `DB_PASSWORD` escribe la contraseña de tu usuario `root` de MySQL.
-3. La base `pidecerca` se crea sola la primera vez que arranca el backend, con todas las tablas.
+3. La base `pide_cerca_dab` se crea sola la primera vez que arranca el backend, con todas las tablas.
 
 ## Ejecutar
 
