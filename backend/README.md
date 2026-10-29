@@ -12,4 +12,4 @@ Se crea en el Paso 1 con estas opciones:
 | Artifact | backend |
 | Java | 21 |
 
-Dependencias: Spring Web, Spring Data JPA, Spring Security, Validation, PostgreSQL Driver y H2 Database.
+Dependencias: Spring Web, Spring Data JPA, Spring Security, Validation, MySQL Driver y H2 Database.

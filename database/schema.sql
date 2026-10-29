@@ -1,110 +1,129 @@
+CREATE DATABASE IF NOT EXISTS pidecerca CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE pidecerca;
+
 CREATE TABLE IF NOT EXISTS usuario (
-    id              BIGSERIAL PRIMARY KEY,
-    nombre          VARCHAR(255),
-    apellido        VARCHAR(255),
-    correo          VARCHAR(255) NOT NULL UNIQUE,
-    telefono        VARCHAR(255),
-    password        VARCHAR(255),
-    rol             VARCHAR(255),
-    activo          BOOLEAN,
-    fecha_registro  TIMESTAMP(6),
-    acepto_privacidad BOOLEAN,
-    fecha_privacidad  TIMESTAMP(6)
-);
+    id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre             VARCHAR(255),
+    apellido           VARCHAR(255),
+    correo             VARCHAR(255) NOT NULL UNIQUE,
+    telefono           VARCHAR(255),
+    password           VARCHAR(255),
+    rol                VARCHAR(20),
+    activo             BOOLEAN,
+    fecha_registro     DATETIME(6),
+    acepto_privacidad  BOOLEAN,
+    fecha_privacidad   DATETIME(6)
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS negocio (
-    id               BIGSERIAL PRIMARY KEY,
-    nombre           VARCHAR(255),
-    descripcion      VARCHAR(255),
-    tipo_comida      VARCHAR(255),
-    direccion        VARCHAR(255),
-    telefono         VARCHAR(255),
-    imagen           VARCHAR(255),
-    horario          VARCHAR(255),
-    latitud          DOUBLE PRECISION,
-    longitud         DOUBLE PRECISION,
-    tiempo_estimado  INTEGER,
-    abierto          BOOLEAN,
-    activo           BOOLEAN,
-    estado_aprobacion VARCHAR(255) CHECK (estado_aprobacion IN ('PENDIENTE', 'APROBADO', 'RECHAZADO')),
-    motivo_rechazo   VARCHAR(255),
-    fecha_solicitud  TIMESTAMP(6),
-    usuario_id       BIGINT REFERENCES usuario (id)
-);
+    id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre             VARCHAR(255),
+    descripcion        VARCHAR(255),
+    tipo_comida        VARCHAR(255),
+    direccion          VARCHAR(255),
+    telefono           VARCHAR(255),
+    imagen             VARCHAR(255),
+    horario            VARCHAR(255),
+    latitud            DOUBLE,
+    longitud           DOUBLE,
+    tiempo_estimado    INT,
+    abierto            BOOLEAN,
+    activo             BOOLEAN,
+    estado_aprobacion  VARCHAR(20),
+    motivo_rechazo     VARCHAR(255),
+    fecha_solicitud    DATETIME(6),
+    usuario_id         BIGINT,
+    CONSTRAINT fk_negocio_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id),
+    CONSTRAINT ck_negocio_aprobacion CHECK (estado_aprobacion IN ('PENDIENTE', 'APROBADO', 'RECHAZADO'))
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS categoria (
-    id           BIGSERIAL PRIMARY KEY,
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
     nombre       VARCHAR(255),
     descripcion  VARCHAR(255),
     activo       BOOLEAN,
-    negocio_id   BIGINT REFERENCES negocio (id)
-);
+    negocio_id   BIGINT,
+    CONSTRAINT fk_categoria_negocio FOREIGN KEY (negocio_id) REFERENCES negocio (id)
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS producto (
-    id            BIGSERIAL PRIMARY KEY,
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     nombre        VARCHAR(255),
     descripcion   VARCHAR(255),
-    precio        DOUBLE PRECISION,
+    precio        DOUBLE,
     imagen        VARCHAR(255),
     disponible    BOOLEAN,
-    negocio_id    BIGINT REFERENCES negocio (id),
-    categoria_id  BIGINT REFERENCES categoria (id)
-);
+    negocio_id    BIGINT,
+    categoria_id  BIGINT,
+    CONSTRAINT fk_producto_negocio FOREIGN KEY (negocio_id) REFERENCES negocio (id),
+    CONSTRAINT fk_producto_categoria FOREIGN KEY (categoria_id) REFERENCES categoria (id)
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS pedido (
-    id                  BIGSERIAL PRIMARY KEY,
-    fecha               TIMESTAMP(6),
-    total               DOUBLE PRECISION,
-    estado              VARCHAR(255) CHECK (estado IN ('PENDIENTE', 'ACEPTADO', 'EN_PREPARACION', 'LISTO_PARA_RECOGER', 'RECOGIDO', 'CANCELADO')),
-    tiempo_preparacion  INTEGER,
-    fecha_aceptado      TIMESTAMP(6),
-    fecha_listo         TIMESTAMP(6),
-    fecha_recogido      TIMESTAMP(6),
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    fecha               DATETIME(6),
+    total               DOUBLE,
+    estado              VARCHAR(30),
+    tiempo_preparacion  INT,
+    fecha_aceptado      DATETIME(6),
+    fecha_listo         DATETIME(6),
+    fecha_recogido      DATETIME(6),
     notas               VARCHAR(255),
     motivo_cancelacion  VARCHAR(255),
-    usuario_id          BIGINT REFERENCES usuario (id),
-    negocio_id          BIGINT REFERENCES negocio (id)
-);
+    usuario_id          BIGINT,
+    negocio_id          BIGINT,
+    CONSTRAINT fk_pedido_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id),
+    CONSTRAINT fk_pedido_negocio FOREIGN KEY (negocio_id) REFERENCES negocio (id),
+    CONSTRAINT ck_pedido_estado CHECK (estado IN ('PENDIENTE', 'ACEPTADO', 'EN_PREPARACION', 'LISTO_PARA_RECOGER', 'RECOGIDO', 'CANCELADO'))
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS detalle_pedido (
-    id               BIGSERIAL PRIMARY KEY,
-    cantidad         INTEGER,
-    precio_unitario  DOUBLE PRECISION,
-    subtotal         DOUBLE PRECISION,
-    pedido_id        BIGINT REFERENCES pedido (id),
-    producto_id      BIGINT REFERENCES producto (id)
-);
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cantidad         INT,
+    precio_unitario  DOUBLE,
+    subtotal         DOUBLE,
+    pedido_id        BIGINT,
+    producto_id      BIGINT,
+    CONSTRAINT fk_detalle_pedido FOREIGN KEY (pedido_id) REFERENCES pedido (id),
+    CONSTRAINT fk_detalle_producto FOREIGN KEY (producto_id) REFERENCES producto (id)
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS pago (
-    id         BIGSERIAL PRIMARY KEY,
-    monto      DOUBLE PRECISION,
-    metodo     VARCHAR(255),
-    fecha      TIMESTAMP(6),
-    estado     VARCHAR(255) CHECK (estado IN ('PENDIENTE', 'PAGADO', 'REEMBOLSO_PENDIENTE', 'REEMBOLSADO', 'FALLIDO')),
-    pedido_id  BIGINT UNIQUE REFERENCES pedido (id)
-);
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    monto      DOUBLE,
+    metodo     VARCHAR(20),
+    fecha      DATETIME(6),
+    estado     VARCHAR(30),
+    pedido_id  BIGINT UNIQUE,
+    CONSTRAINT fk_pago_pedido FOREIGN KEY (pedido_id) REFERENCES pedido (id),
+    CONSTRAINT ck_pago_estado CHECK (estado IN ('PENDIENTE', 'PAGADO', 'REEMBOLSO_PENDIENTE', 'REEMBOLSADO', 'FALLIDO'))
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS notificacion (
-    id          BIGSERIAL PRIMARY KEY,
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
     titulo      VARCHAR(255),
     mensaje     VARCHAR(255),
     leida       BOOLEAN,
-    fecha       TIMESTAMP(6),
-    usuario_id  BIGINT REFERENCES usuario (id),
-    pedido_id   BIGINT REFERENCES pedido (id)
-);
+    fecha       DATETIME(6),
+    usuario_id  BIGINT,
+    pedido_id   BIGINT,
+    CONSTRAINT fk_notificacion_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id),
+    CONSTRAINT fk_notificacion_pedido FOREIGN KEY (pedido_id) REFERENCES pedido (id)
+) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS registro_accion (
-    id          BIGSERIAL PRIMARY KEY,
-    fecha       TIMESTAMP(6),
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    fecha       DATETIME(6),
     accion      VARCHAR(255),
     detalle     VARCHAR(500),
-    usuario_id  BIGINT REFERENCES usuario (id)
-);
+    usuario_id  BIGINT,
+    CONSTRAINT fk_registro_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
+) ENGINE = InnoDB;
 
-CREATE INDEX IF NOT EXISTS idx_pedido_negocio_estado ON pedido (negocio_id, estado);
-CREATE INDEX IF NOT EXISTS idx_pedido_usuario ON pedido (usuario_id);
-CREATE INDEX IF NOT EXISTS idx_producto_negocio ON producto (negocio_id);
-CREATE INDEX IF NOT EXISTS idx_notificacion_usuario_leida ON notificacion (usuario_id, leida);
-CREATE INDEX IF NOT EXISTS idx_negocio_aprobacion ON negocio (estado_aprobacion);
-CREATE INDEX IF NOT EXISTS idx_registro_accion_fecha ON registro_accion (fecha);
+CREATE INDEX idx_pedido_negocio_estado ON pedido (negocio_id, estado);
+CREATE INDEX idx_pedido_usuario ON pedido (usuario_id);
+CREATE INDEX idx_producto_negocio ON producto (negocio_id);
+CREATE INDEX idx_notificacion_usuario_leida ON notificacion (usuario_id, leida);
+CREATE INDEX idx_negocio_aprobacion ON negocio (estado_aprobacion);
+CREATE INDEX idx_registro_accion_fecha ON registro_accion (fecha);

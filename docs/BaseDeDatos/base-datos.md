@@ -2,7 +2,7 @@
 
 ## 1. Descripción
 
-La base de datos de PideCerca será utilizada para almacenar y organizar la información necesaria para el funcionamiento de la plataforma.
+La base de datos de PideCerca usa **MySQL** y será utilizada para almacenar y organizar la información necesaria para el funcionamiento de la plataforma.
 
 Permitirá gestionar usuarios, negocios, categorías, productos, pedidos, pagos y notificaciones.
 

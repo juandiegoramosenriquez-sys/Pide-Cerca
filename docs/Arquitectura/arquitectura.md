@@ -8,8 +8,8 @@ PideCerca es una aplicación web formada por dos partes: un **backend** en Sprin
 Celular o computadora
         │
         ▼
-  Frontend React  ──── API REST (JSON + token JWT) ────►  Backend Spring Boot  ──►  PostgreSQL
-  (una sola web)                                          (un solo "cerebro")        (Supabase)
+  Frontend React  ──── API REST (JSON + token JWT) ────►  Backend Spring Boot  ──►  MySQL
+  (una sola web)                                          (un solo "cerebro")        (local)
 ```
 
 ## 2. Componentes
@@ -31,8 +31,8 @@ Se publica como **PWA**: se puede instalar en el celular desde el navegador y co
 - Lógica de pedidos, cálculo de distancias, notificaciones y aprobación de negocios.
 - Registro de las acciones importantes del administrador.
 
-### Base de datos (PostgreSQL)
-Alojada en Supabase. Para pruebas sin internet se usa H2 en el perfil `local`.
+### Base de datos (MySQL)
+MySQL 9 instalado en la computadora de desarrollo, base `pidecerca`. Spring Boot crea y actualiza las tablas automáticamente. El script completo está en `database/schema.sql`.
 
 ## 3. Roles
 
@@ -54,9 +54,10 @@ Alojada en Supabase. Para pruebas sin internet se usa H2 en el perfil `local`.
 |-------|----------|
 | Frontend | Vercel |
 | Backend | Render |
-| Base de datos | Supabase |
+| Base de datos | MySQL en un servicio en la nube (por definir) |
 
 ## 6. Herramientas
 - **IntelliJ IDEA:** backend.
 - **Visual Studio Code:** frontend y documentación.
+- **MySQL Workbench:** ver y administrar la base de datos.
 - **Git y GitHub:** control de versiones.

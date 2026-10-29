@@ -23,7 +23,7 @@ Pide-Cerca
 |-------|------------|
 | Backend | Java 21, Spring Boot, Spring Security con JWT, Spring Data JPA |
 | Frontend | React, Vite, PWA instalable |
-| Base de datos | PostgreSQL en Supabase (H2 para pruebas locales) |
+| Base de datos | MySQL 9 (H2 para pruebas sin MySQL) |
 
 ## Diseño
 
