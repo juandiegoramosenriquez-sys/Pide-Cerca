@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { MapPin } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import Mapa from '../../componentes/Mapa'
+import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import MiCuenta from '../../componentes/MiCuenta'
 import { BotonCarga, Error, Interruptor } from '../../componentes/Ui'
 import { haceCuanto } from '../../util/formato'
@@ -35,7 +35,7 @@ function UbicacionEnVivo() {
       {negocio.latitud != null && negocio.longitud != null ? (
         <Mapa puestos={[negocio]} alto={220} />
       ) : (
-        <p className="mini">Todavía no hay ubicación guardada. Usa el botón “Usar mi ubicación” de abajo o activa la ubicación en vivo.</p>
+        <p className="mini">Todavía no hay ubicación guardada. Márcala en el mapa de “Ubicación del puesto”, más abajo, o activa la ubicación en vivo.</p>
       )}
       <p className="mini">Mantén esta web abierta en tu celular para que la ubicación se actualice.</p>
     </section>
@@ -59,26 +59,7 @@ export default function MiPuesto() {
   }))
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
-  const [ubicando, setUbicando] = useState(false)
   const cambiar = (c, v) => setDatos((d) => ({ ...d, [c]: v }))
-
-  function ubicar() {
-    if (!navigator.geolocation) return setError('Tu navegador no permite obtener la ubicación')
-    setUbicando(true)
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        cambiar('latitud', Number(p.coords.latitude.toFixed(6)))
-        cambiar('longitud', Number(p.coords.longitude.toFixed(6)))
-        setUbicando(false)
-        mostrar('Ubicación lista. Toca “Guardar cambios”')
-      },
-      () => {
-        setUbicando(false)
-        setError('No pudimos obtener tu ubicación. Revisa los permisos del navegador')
-      },
-      { enableHighAccuracy: true, timeout: 15000 }
-    )
-  }
 
   async function guardar(e) {
     e.preventDefault()
@@ -148,17 +129,14 @@ export default function MiPuesto() {
           <label htmlFor="mp-img">Foto del puesto (enlace, opcional)</label>
           <input id="mp-img" value={datos.imagen} onChange={(e) => cambiar('imagen', e.target.value)} placeholder="https://…" />
         </div>
-        <div className="tarjeta fila entre envolver" style={{ background: 'var(--tarj-2)' }}>
-          <div>
-            <h3>Ubicación del puesto</h3>
-            <p className="mini">
-              {datos.latitud !== '' && datos.longitud !== '' ? `${datos.latitud}, ${datos.longitud}` : 'Sin ubicación: los clientes no te verán como cercano'}
-            </p>
-          </div>
-          <BotonCarga type="button" className="boton secundario" cargando={ubicando} onClick={ubicar}>
-            <MapPin size={20} />
-            Usar mi ubicación
-          </BotonCarga>
+        <div className="campo">
+          <label>Ubicación del puesto</label>
+          <SelectorUbicacion
+            latitud={datos.latitud}
+            longitud={datos.longitud}
+            alCambiar={(cambio) => setDatos((d) => ({ ...d, ...cambio }))}
+          />
+          <span className="ayuda">Después de mover el pin, toca “Guardar cambios”.</span>
         </div>
         <BotonCarga cargando={guardando}>Guardar cambios</BotonCarga>
       </form>

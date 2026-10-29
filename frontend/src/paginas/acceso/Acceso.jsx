@@ -4,6 +4,7 @@ import { Eye, EyeOff, Store } from 'lucide-react'
 import { inicioDe, useSesion } from '../../contexto/Sesion'
 import { useRolVisual } from '../../contexto/Tema'
 import { BotonTema } from '../../componentes/Marco'
+import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import { BotonCarga, Error } from '../../componentes/Ui'
 import { pedirPermisoNotificaciones } from '../../util/sonido'
 
@@ -190,7 +191,7 @@ export function RegistroNegocio() {
   const { registrarNegocio } = useSesion()
   const navegar = useNavigate()
   const [dueno, setDueno] = useState({ nombre: '', apellido: '', correo: '', telefono: '', password: '' })
-  const [puesto, setPuesto] = useState({ nombre: '', tipoComida: '', direccion: '', horario: '' })
+  const [puesto, setPuesto] = useState({ nombre: '', tipoComida: '', direccion: '', horario: '', latitud: '', longitud: '' })
   const [acepto, setAcepto] = useState(false)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -202,12 +203,13 @@ export function RegistroNegocio() {
     if (!dueno.correo.includes('@')) return setError('Escribe un correo válido')
     if (dueno.password.length < 6) return setError('La contraseña debe tener al menos 6 caracteres')
     if (!puesto.nombre.trim()) return setError('Escribe el nombre de tu puesto')
+    if (puesto.latitud === '' || puesto.longitud === '') return setError('Marca en el mapa dónde está tu puesto, así los clientes te encuentran')
     if (!acepto) return setError('Debes aceptar el aviso de privacidad')
     setEnviando(true)
     try {
       await registrarNegocio({
         propietario: { ...dueno, correo: dueno.correo.trim(), aceptoPrivacidad: true },
-        negocio: { ...puesto, telefono: dueno.telefono }
+        negocio: { ...puesto, telefono: dueno.telefono, latitud: Number(puesto.latitud), longitud: Number(puesto.longitud) }
       })
       navegar('/negocio', { replace: true })
     } catch (err) {
@@ -257,8 +259,17 @@ export function RegistroNegocio() {
             <input id="n-tipo" placeholder="Salchipapas, hamburguesas, anticuchos…" value={puesto.tipoComida} onChange={(e) => setPuesto({ ...puesto, tipoComida: e.target.value })} />
           </div>
           <div className="campo">
-            <label htmlFor="n-direccion">¿Dónde está tu puesto?</label>
+            <label>¿Dónde está tu puesto?</label>
+            <SelectorUbicacion
+              latitud={puesto.latitud}
+              longitud={puesto.longitud}
+              alCambiar={(cambio) => setPuesto((p) => ({ ...p, ...cambio }))}
+            />
+          </div>
+          <div className="campo">
+            <label htmlFor="n-direccion">Dirección o referencia</label>
             <input id="n-direccion" placeholder="Av. Abancay 410, frente al parque" value={puesto.direccion} onChange={(e) => setPuesto({ ...puesto, direccion: e.target.value })} />
+            <span className="ayuda">Se llena sola al marcar el mapa. Puedes agregar una referencia, como “frente al parque”.</span>
           </div>
           <div className="campo">
             <label htmlFor="n-horario">Horario</label>
