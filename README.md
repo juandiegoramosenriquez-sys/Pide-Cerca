@@ -40,11 +40,11 @@ Modo claro con degradado y modo oscuro neón. Textos de 16 px, botones de 52 px 
 - [x] Paso 0: Repositorio y estructura
 - [x] Paso 1: Crear el proyecto Spring Boot
 - [x] Paso 2: Backend (entidades, seguridad, pedidos, aprobación de puestos)
-- [ ] Paso 3: Crear el proyecto React
-- [ ] Paso 4: Base del diseño (colores, letras, botones)
-- [ ] Paso 5: Pantallas del cliente
-- [ ] Paso 6: Pantallas del negocio
-- [ ] Paso 7: Panel del administrador
+- [x] Paso 3: Crear el proyecto React
+- [x] Paso 4: Base del diseño (colores, letras, botones)
+- [x] Paso 5: Pantallas del cliente
+- [x] Paso 6: Pantallas del negocio
+- [x] Paso 7: Panel del administrador
 - [ ] Paso 8: Publicar en internet y generar el APK
 
 ## Documentación

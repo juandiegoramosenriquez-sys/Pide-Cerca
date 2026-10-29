@@ -11,3 +11,4 @@
 **/.env.local
 backend/data/
 *.log
+.claude/

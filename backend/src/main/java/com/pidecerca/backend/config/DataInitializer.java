@@ -100,6 +100,7 @@ public class DataInitializer implements CommandLineRunner {
         Negocio donaPepa = negocio("Anticuchos Doña Pepa", "Anticuchos", "Anticuchos y pancita a la parrilla",
                 "Jr. Huánuco 812, Cercado de Lima", -12.0575, -77.0290, 20, "Jue a Dom · 6:00 pm - 11:00 pm", pepa);
         donaPepa.setEstadoAprobacion(EstadoAprobacion.PENDIENTE);
+        donaPepa.setFechaSolicitud(LocalDateTime.now().minusHours(2));
         donaPepa.setAbierto(false);
         negocioRepository.save(donaPepa);
 

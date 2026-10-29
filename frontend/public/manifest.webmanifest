@@ -1,0 +1,16 @@
+{
+  "name": "PideCerca",
+  "short_name": "PideCerca",
+  "description": "Pide en los puestos de comida cercanos y recoge sin esperar",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF8F1",
+  "theme_color": "#EA580C",
+  "lang": "es-PE",
+  "icons": [
+    { "src": "/icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
