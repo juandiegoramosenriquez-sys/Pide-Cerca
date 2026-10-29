@@ -93,6 +93,8 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/registro", "/api/auth/registro-negocio", "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/salud").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/imagenes/*").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/imagenes").hasAnyRole(NEGOCIO, ADMIN)
 
                         .requestMatchers("/api/admin/**").hasRole(ADMIN)
 

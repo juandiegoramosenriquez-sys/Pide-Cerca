@@ -146,7 +146,7 @@ function TarjetaPedido({ pedido, ahora }) {
 
       {grupo === 'ok' && (
         <>
-          <div className="aviso info">Cuando llegue el cliente, pregúntale por el número #{pedido.id}.</div>
+          <div className="aviso info">Entrega al decir #{pedido.id}</div>
           <button className="boton principal ancho" onClick={entregado} disabled={ocupado}>
             {ocupado ? <Loader2 className="giro" size={22} /> : <Check size={22} />}
             Entregado al cliente
@@ -156,7 +156,7 @@ function TarjetaPedido({ pedido, ahora }) {
 
       {rechazando && (
         <Modal titulo={`¿Rechazar el pedido #${pedido.id}?`} alCerrar={() => setRechazando(false)}>
-          <p className="sub">Le avisaremos al cliente y se le devolverá su dinero. ¿Por qué?</p>
+          <p className="sub">¿Por qué?</p>
           <div className="lista" role="radiogroup">
             {MOTIVOS.map((m) => (
               <label key={m} className="tarjeta casilla" style={{ cursor: 'pointer', color: 'var(--t1)' }}>
@@ -197,7 +197,7 @@ export default function PedidosNegocio() {
   return (
     <>
       <h1>Pedidos de hoy</h1>
-      {!negocio.abierto && <div className="aviso alerta">Tu puesto está cerrado. Toca “Cerrado” arriba para empezar a recibir pedidos.</div>}
+      {!negocio.abierto && <div className="aviso alerta">Tu puesto está cerrado. Toca “Cerrado” para abrir.</div>}
 
       <div className="contadores">
         {GRUPOS.map((g) => (
@@ -221,7 +221,7 @@ export default function PedidosNegocio() {
             .map((p) => (
               <TarjetaPedido key={p.id} pedido={p} ahora={ahora} />
             ))}
-          {pedidos.length === 0 && <Vacio>No tienes pedidos pendientes. Sonará un aviso cuando llegue uno.</Vacio>}
+          {pedidos.length === 0 && <Vacio>Sin pedidos por ahora. Sonará un aviso.</Vacio>}
         </div>
       ) : (
         <div className="columnas">

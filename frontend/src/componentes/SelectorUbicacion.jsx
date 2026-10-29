@@ -99,7 +99,7 @@ export default function SelectorUbicacion({ latitud, longitud, alCambiar }) {
       <div className="fila" style={{ gap: 8 }}>
         <input
           className="buscador"
-          placeholder="O busca la dirección: Av. Abancay 410"
+          placeholder="Buscar dirección"
           value={buscar}
           onChange={(e) => setBuscar(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && irA(e)}
@@ -135,7 +135,7 @@ export default function SelectorUbicacion({ latitud, longitud, alCambiar }) {
       </div>
 
       <p className="mini">
-        {punto ? 'Si el pin no está exacto, arrástralo o toca el mapa en el lugar correcto.' : 'Toca el mapa en el lugar donde está tu puesto.'}
+        {punto ? 'Arrastra el pin si no está exacto.' : 'Toca el mapa donde está tu puesto.'}
       </p>
       {error && <div className="aviso error">{error}</div>}
     </div>

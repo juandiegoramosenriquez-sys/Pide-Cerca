@@ -3,7 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Clock, MapPin, Navigation, Plus } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
+import { Foto } from '../../componentes/Foto'
 import Mapa, { enlaceComoLlegar } from '../../componentes/Mapa'
+import { urlImagen } from '../../util/imagen'
 import { Cargando, Error, Modal } from '../../componentes/Ui'
 import { haceCuanto, iniciales, soles } from '../../util/formato'
 
@@ -73,10 +75,13 @@ export default function Puesto() {
       </button>
 
       <section className="destacada columna" style={{ gap: 8 }}>
+        {negocio.imagen && <img className="portada" src={urlImagen(negocio.imagen)} alt="" />}
         <div className="fila" style={{ gap: 14 }}>
-          <span className="inicial" style={{ background: 'rgba(255,255,255,.2)', color: 'inherit' }}>
-            {negocio.imagen ? <img src={negocio.imagen} alt="" /> : iniciales(negocio.nombre)}
-          </span>
+          {!negocio.imagen && (
+            <span className="inicial" style={{ background: 'rgba(255,255,255,.2)', color: 'inherit' }}>
+              {iniciales(negocio.nombre)}
+            </span>
+          )}
           <div style={{ minWidth: 0 }}>
             <h1>{negocio.nombre}</h1>
             <p style={{ opacity: 0.9 }}>{negocio.tipoComida}</p>
@@ -99,7 +104,7 @@ export default function Puesto() {
         </div>
       </section>
 
-      {!puedePedir && <div className="aviso alerta">Este puesto está cerrado ahora. Puedes ver su menú, pero no hacer pedidos.</div>}
+      {!puedePedir && <div className="aviso alerta">Cerrado ahora.</div>}
 
       {negocio.latitud != null && negocio.longitud != null && (
         <section className="tarjeta columna" style={{ gap: 10, padding: 12 }}>
@@ -132,11 +137,11 @@ export default function Puesto() {
         </div>
       )}
 
-      <div className="lista">
+      <div className="grilla">
         {visibles.map((p) => {
           const disponible = p.disponible
           return (
-            <div key={p.id} className="tarjeta fila" style={{ gap: 14, opacity: disponible ? 1 : 0.55 }}>
+            <div key={p.id} className={'producto' + (disponible ? '' : ' apagado')}>
               <button
                 className="fila"
                 style={{ gap: 14, flex: 1, minWidth: 0, border: 0, background: 'none', padding: 0, textAlign: 'left' }}
@@ -145,7 +150,7 @@ export default function Puesto() {
                   setCuantos(1)
                 }}
               >
-                <span className="inicial">{p.imagen ? <img src={p.imagen} alt="" /> : iniciales(p.nombre)}</span>
+                <Foto src={p.imagen} tamano={76} />
                 <span style={{ minWidth: 0 }}>
                   <h3>{p.nombre}</h3>
                   {p.descripcion && <span className="mini" style={{ display: 'block' }}>{p.descripcion}</span>}
@@ -165,7 +170,7 @@ export default function Puesto() {
 
       {elegido && (
         <Modal titulo={elegido.nombre} alCerrar={() => setElegido(null)}>
-          {elegido.imagen && <img src={elegido.imagen} alt="" style={{ width: '100%', borderRadius: 16, maxHeight: 220, objectFit: 'cover' }} />}
+          {elegido.imagen && <img src={urlImagen(elegido.imagen)} alt="" style={{ width: '100%', borderRadius: 16, maxHeight: 240, objectFit: 'cover' }} />}
           {elegido.descripcion && <p className="sub">{elegido.descripcion}</p>}
           <div className="fila entre">
             <span className="numero precio">{soles(elegido.precio)}</span>

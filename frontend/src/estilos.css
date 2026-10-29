@@ -1324,3 +1324,245 @@ p {
 .leaflet-container {
   font-family: var(--fuente);
 }
+
+.foto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--cont), color-mix(in srgb, var(--cont) 60%, var(--tarj)));
+  color: var(--cont-t);
+}
+
+.foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.subir-foto {
+  position: relative;
+  width: 100%;
+}
+
+.subir-foto-area {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  border: 2px dashed var(--borde);
+  background: var(--tarj-2);
+  color: var(--t2);
+  overflow: hidden;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subir-foto-area img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.subir-foto-etiqueta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.subir-foto-etiqueta.sobre {
+  flex-direction: row;
+  align-self: flex-end;
+  margin-bottom: 12px;
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #FFFFFF;
+  font-size: 14px;
+}
+
+.subir-foto-quitar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
+}
+
+.producto {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  background: var(--tarj);
+  border: 1px solid var(--borde);
+  border-radius: 18px;
+  padding: 10px 12px 10px 10px;
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+.producto:hover {
+  box-shadow: var(--sombra);
+}
+
+.producto.apagado {
+  opacity: 0.55;
+}
+
+.producto-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.producto-info h3 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.producto-info .mini {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seccion-titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.seccion-titulo span {
+  color: var(--t3);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.portada {
+  width: calc(100% + 36px);
+  margin: -18px -18px 4px;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 20px 20px 0 0;
+  display: block;
+}
+
+.acciones-modal {
+  position: sticky;
+  bottom: calc(-20px - env(safe-area-inset-bottom, 0px));
+  margin: 0 -20px calc(-20px - env(safe-area-inset-bottom, 0px));
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--tarj);
+  border-top: 1px solid var(--borde);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes entrar-modal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes subir-toast {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+.contenido > * {
+  animation: aparecer 0.35s ease both;
+}
+
+.lista > *,
+.grilla > *,
+.contadores > *,
+.metricas > * {
+  animation: aparecer 0.35s ease both;
+}
+
+.lista > *:nth-child(2),
+.grilla > *:nth-child(2),
+.contadores > *:nth-child(2),
+.metricas > *:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.lista > *:nth-child(3),
+.grilla > *:nth-child(3),
+.contadores > *:nth-child(3),
+.metricas > *:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.lista > *:nth-child(4),
+.grilla > *:nth-child(4),
+.metricas > *:nth-child(4) {
+  animation-delay: 0.12s;
+}
+
+.lista > *:nth-child(n + 5),
+.grilla > *:nth-child(n + 5) {
+  animation-delay: 0.16s;
+}
+
+.modal {
+  animation: entrar-modal 0.25s ease both;
+}
+
+.toast {
+  animation: subir-toast 0.25s ease both;
+}
+
+.producto:active,
+.chip:active,
+.nav-item:active,
+.mas:active {
+  transform: scale(0.97);
+}
+
+.nav-item,
+.chip,
+.tab-arriba {
+  transition: background 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}

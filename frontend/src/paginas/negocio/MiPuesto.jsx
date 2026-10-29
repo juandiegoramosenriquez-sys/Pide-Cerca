@@ -3,6 +3,7 @@ import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import Mapa from '../../componentes/Mapa'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
+import { SubirFoto } from '../../componentes/Foto'
 import MiCuenta from '../../componentes/MiCuenta'
 import { BotonCarga, Error, Interruptor } from '../../componentes/Ui'
 import { haceCuanto } from '../../util/formato'
@@ -18,7 +19,7 @@ function UbicacionEnVivo() {
       <div className="fila entre" style={{ alignItems: 'flex-start' }}>
         <div>
           <h2>Ubicación en vivo</h2>
-          <p className="sub">Si tu puesto se mueve (carretilla), los clientes verán dónde estás en el mapa mientras tengas el puesto abierto.</p>
+          <p className="sub">Para carretillas: te ven en el mapa mientras estés abierto.</p>
         </div>
         <Interruptor
           encendido={compartir}
@@ -30,14 +31,13 @@ function UbicacionEnVivo() {
         />
       </div>
       {transmitiendo && <span className="en-vivo">Compartiendo · actualizada {haceCuanto(negocio.ubicacionActualizada) || 'en un momento'}</span>}
-      {compartir && !negocio.abierto && <div className="aviso alerta">Abre tu puesto (botón de arriba) para empezar a compartir tu ubicación.</div>}
+      {compartir && !negocio.abierto && <div className="aviso alerta">Abre tu puesto para compartir.</div>}
       {errorGps && <div className="aviso error">{errorGps}</div>}
       {negocio.latitud != null && negocio.longitud != null ? (
         <Mapa puestos={[negocio]} alto={220} />
       ) : (
-        <p className="mini">Todavía no hay ubicación guardada. Márcala en el mapa de “Ubicación del puesto”, más abajo, o activa la ubicación en vivo.</p>
+        <p className="mini">Marca tu ubicación más abajo.</p>
       )}
-      <p className="mini">Mantén esta web abierta en tu celular para que la ubicación se actualice.</p>
     </section>
   )
 }
@@ -107,11 +107,11 @@ export default function MiPuesto() {
         </div>
         <div className="dos">
           <div className="campo">
-            <label htmlFor="mp-dir">Dirección o referencia</label>
+            <label htmlFor="mp-dir">Dirección</label>
             <input id="mp-dir" value={datos.direccion} onChange={(e) => cambiar('direccion', e.target.value)} />
           </div>
           <div className="campo">
-            <label htmlFor="mp-tel">Teléfono del puesto</label>
+            <label htmlFor="mp-tel">Teléfono</label>
             <input id="mp-tel" inputMode="tel" value={datos.telefono} onChange={(e) => cambiar('telefono', e.target.value)} />
           </div>
         </div>
@@ -121,13 +121,13 @@ export default function MiPuesto() {
             <input id="mp-hor" value={datos.horario} onChange={(e) => cambiar('horario', e.target.value)} />
           </div>
           <div className="campo">
-            <label htmlFor="mp-min">Minutos que sueles tardar</label>
+            <label htmlFor="mp-min">Minutos por pedido</label>
             <input id="mp-min" inputMode="numeric" value={datos.tiempoEstimado} onChange={(e) => cambiar('tiempoEstimado', e.target.value)} />
           </div>
         </div>
         <div className="campo">
-          <label htmlFor="mp-img">Foto del puesto (enlace, opcional)</label>
-          <input id="mp-img" value={datos.imagen} onChange={(e) => cambiar('imagen', e.target.value)} placeholder="https://…" />
+          <label>Foto del puesto</label>
+          <SubirFoto valor={datos.imagen} alCambiar={(v) => cambiar('imagen', v)} texto="Agregar foto de tu puesto" />
         </div>
         <div className="campo">
           <label>Ubicación del puesto</label>
@@ -136,7 +136,7 @@ export default function MiPuesto() {
             longitud={datos.longitud}
             alCambiar={(cambio) => setDatos((d) => ({ ...d, ...cambio }))}
           />
-          <span className="ayuda">Después de mover el pin, toca “Guardar cambios”.</span>
+          
         </div>
         <BotonCarga cargando={guardando}>Guardar cambios</BotonCarga>
       </form>

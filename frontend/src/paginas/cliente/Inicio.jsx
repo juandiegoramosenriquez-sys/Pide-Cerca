@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Crosshair, List, Loader2, Map as IconoMapa, MapPin, Search } from 'lucide-react'
 import { api } from '../../api'
+import { Foto } from '../../componentes/Foto'
 import Mapa, { buscarZona, pedirGps } from '../../componentes/Mapa'
 import { Cargando, Error, Vacio } from '../../componentes/Ui'
 import { distancia, iniciales } from '../../util/formato'
@@ -213,7 +214,7 @@ export default function Inicio() {
             <div className="lista">
               {visibles.map((n) => (
                 <button key={n.id} className="tarjeta tocable fila" style={{ gap: 14 }} onClick={() => navegar(`/puesto/${n.id}`)}>
-                  <span className="inicial">{n.imagen ? <img src={n.imagen} alt="" /> : iniciales(n.nombre)}</span>
+                  <Foto src={n.imagen} tamano={64} texto={iniciales(n.nombre)} />
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <h3 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.nombre}</h3>
                     <span className="sub" style={{ display: 'block' }}>

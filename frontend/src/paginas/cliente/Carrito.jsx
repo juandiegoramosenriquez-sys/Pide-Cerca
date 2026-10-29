@@ -114,7 +114,7 @@ export default function Carrito() {
             </button>
           ))}
         </div>
-        <div className="aviso info">Pago de demostración: no se cobra dinero real. El pedido se registra como pagado.</div>
+        <div className="aviso info">Pago de prueba: no se cobra dinero real.</div>
         {resumen}
         <Error>{error}</Error>
         <BotonCarga cargando={enviando} onClick={pagar}>

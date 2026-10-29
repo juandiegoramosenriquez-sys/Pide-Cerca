@@ -53,8 +53,7 @@ function AvisoPrivacidad({ acepto, alCambiar }) {
     <label className="casilla">
       <input type="checkbox" checked={acepto} onChange={(e) => alCambiar(e.target.checked)} />
       <span>
-        Acepto que PideCerca use mis datos solo para gestionar mis pedidos, según la Ley N.° 29733 de Protección de Datos Personales.
-        No compartimos tus datos con terceros.
+        Acepto el aviso de privacidad (Ley N.° 29733).
       </span>
     </label>
   )
@@ -90,7 +89,7 @@ export function Ingresar() {
         <Cabecera />
         <div>
           <h1>Pide antes, recoge sin esperar</h1>
-          <p className="sub">Entra para ver los puestos de comida cerca de ti.</p>
+          <p className="sub">Comida cerca de ti, sin colas.</p>
         </div>
         <form className="tarjeta formulario" onSubmit={enviar}>
           <Error>{error}</Error>
@@ -152,7 +151,7 @@ export function RegistroCliente() {
         <Cabecera />
         <div>
           <h1>Crea tu cuenta</h1>
-          <p className="sub">Es gratis y solo toma un minuto.</p>
+          <p className="sub">Gratis, en un minuto.</p>
         </div>
         <form className="tarjeta formulario" onSubmit={enviar}>
           <Error>{error}</Error>
@@ -224,7 +223,7 @@ export function RegistroNegocio() {
         <Cabecera />
         <div>
           <h1>Registra tu puesto</h1>
-          <p className="sub">Recibe pedidos desde el celular. Revisaremos tus datos y te avisaremos cuando tu puesto esté aprobado.</p>
+          <p className="sub">Recibe pedidos desde tu celular.</p>
         </div>
         <form className="tarjeta formulario" onSubmit={enviar}>
           <Error>{error}</Error>
@@ -269,7 +268,7 @@ export function RegistroNegocio() {
           <div className="campo">
             <label htmlFor="n-direccion">Dirección o referencia</label>
             <input id="n-direccion" placeholder="Av. Abancay 410, frente al parque" value={puesto.direccion} onChange={(e) => setPuesto({ ...puesto, direccion: e.target.value })} />
-            <span className="ayuda">Se llena sola al marcar el mapa. Puedes agregar una referencia, como “frente al parque”.</span>
+            <span className="ayuda">Puedes agregar una referencia.</span>
           </div>
           <div className="campo">
             <label htmlFor="n-horario">Horario</label>

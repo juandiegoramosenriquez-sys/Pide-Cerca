@@ -386,7 +386,7 @@ export function Usuarios() {
   return (
     <>
       <h1>Usuarios</h1>
-      <div className="aviso info">Por privacidad, los correos y teléfonos se muestran ocultos. Las contraseñas nunca se pueden ver.</div>
+      <div className="aviso info">Correos y teléfonos ocultos por privacidad.</div>
       <div className="fila envolver">
         <input className="buscador" style={{ flex: 1, minWidth: 200 }} placeholder="Buscar por nombre" value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar usuario" />
         <div className="chips">
@@ -452,7 +452,6 @@ export function Registro() {
     <>
       <div>
         <h1>Registro de acciones</h1>
-        <p className="sub">Todo lo que haces como administrador queda anotado aquí. Te protege a ti y a los usuarios.</p>
       </div>
       {lista.length === 0 && <Vacio>Todavía no hay acciones registradas.</Vacio>}
       <div className="tabla-caja">

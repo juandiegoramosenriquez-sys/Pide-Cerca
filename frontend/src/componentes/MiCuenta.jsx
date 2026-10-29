@@ -55,7 +55,6 @@ export default function MiCuenta() {
 
       <section className="tarjeta columna">
         <h2>Pantalla</h2>
-        <p className="sub">De día al sol se ve mejor el modo claro. De noche, el oscuro.</p>
         <div className="opcion-tema">
           {modos.map((m) => (
             <button key={m.clave} className={'chip' + (modo === m.clave ? ' activo' : '')} onClick={() => cambiarModo(m.clave)}>

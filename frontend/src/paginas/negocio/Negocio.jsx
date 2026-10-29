@@ -28,8 +28,8 @@ function EnRevision({ negocio }) {
           <h1>{rechazado ? 'Tu solicitud no fue aprobada' : 'Estamos revisando tu puesto'}</h1>
           <p style={{ opacity: 0.92 }}>
             {rechazado
-              ? `Motivo: ${negocio.motivoRechazo}. Escríbenos si quieres corregir tus datos.`
-              : 'El administrador de PideCerca revisará tus datos. Cuando tu puesto sea aprobado podrás armar tu menú y recibir pedidos.'}
+              ? `Motivo: ${negocio.motivoRechazo}`
+              : 'Te avisaremos aquí cuando tu puesto esté aprobado.'}
           </p>
         </section>
         <section className="tarjeta columna" style={{ gap: 6 }}>
