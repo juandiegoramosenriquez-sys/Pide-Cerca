@@ -24,16 +24,21 @@ export default function Inicio() {
   const [error, setError] = useState('')
   const [texto, setTexto] = useState('')
   const [tipo, setTipo] = useState('')
-  const [ubicacion, setUbicacion] = useState(null)
+  const [ubicacion, setUbicacion] = useState(false)
   const [lejos, setLejos] = useState(false)
   const [recargar, setRecargar] = useState(0)
 
   useEffect(() => {
-    obtenerUbicacion().then((u) => setUbicacion(u || false))
+    let vigente = true
+    obtenerUbicacion().then((u) => {
+      if (vigente && u) setUbicacion(u)
+    })
+    return () => {
+      vigente = false
+    }
   }, [recargar])
 
   useEffect(() => {
-    if (ubicacion === null) return
     let vigente = true
     const espera = setTimeout(async () => {
       try {
