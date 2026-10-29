@@ -1,0 +1,13 @@
+**/target/
+**/node_modules/
+**/dist/
+**/build/
+**/.idea/
+**/.vscode/
+*.iml
+.DS_Store
+**/secrets.properties
+**/.env
+**/.env.local
+backend/data/
+*.log
