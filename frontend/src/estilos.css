@@ -1923,3 +1923,35 @@ textarea {
 .lista.cerrados > * {
   filter: grayscale(0.7) opacity(0.65);
 }
+
+.boton.secundario,
+.boton-icono,
+.chip:not(.activo) {
+  background: var(--tarj);
+  border-color: color-mix(in srgb, var(--t3) 50%, transparent);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--t3) 35%, transparent), 0 3px 10px rgba(15, 23, 42, 0.07);
+}
+
+.boton.peligro {
+  background: var(--tarj);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--mal) 35%, transparent), 0 3px 10px rgba(15, 23, 42, 0.07);
+}
+
+.boton.secundario svg,
+.boton-icono svg {
+  color: var(--acento);
+}
+
+.boton.secundario:hover,
+.boton-icono:hover,
+.chip:not(.activo):hover {
+  border-color: var(--acento);
+}
+
+.boton.secundario:active,
+.boton.peligro:active,
+.boton-icono:active,
+.chip:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
