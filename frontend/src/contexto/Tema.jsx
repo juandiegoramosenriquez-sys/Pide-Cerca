@@ -16,6 +16,14 @@ function leer() {
   }
 }
 
+function leerEstilo() {
+  try {
+    return localStorage.getItem('pidecerca_estilo') || 'moderno'
+  } catch {
+    return 'moderno'
+  }
+}
+
 function porHora() {
   const hora = new Date().getHours()
   return hora >= 6 && hora < 18 ? 'claro' : 'oscuro'
@@ -23,6 +31,7 @@ function porHora() {
 
 export function TemaProveedor({ children }) {
   const [modo, setModo] = useState(leer)
+  const [estilo, setEstilo] = useState(leerEstilo)
   const [rol, setRol] = useState('cliente')
   const [hora, setHora] = useState(porHora)
 
@@ -38,9 +47,10 @@ export function TemaProveedor({ children }) {
     const raiz = document.documentElement
     raiz.dataset.tema = real
     raiz.dataset.rol = rol
+    raiz.dataset.estilo = estilo
     const meta = document.querySelector('meta[name="theme-color"]')
     if (meta) meta.setAttribute('content', COLOR_BARRA[rol][real])
-  }, [real, rol])
+  }, [real, rol, estilo])
 
   function cambiarModo(nuevo) {
     setModo(nuevo)
@@ -51,11 +61,20 @@ export function TemaProveedor({ children }) {
     }
   }
 
+  function cambiarEstilo(nuevo) {
+    setEstilo(nuevo)
+    try {
+      localStorage.setItem('pidecerca_estilo', nuevo)
+    } catch {
+      return
+    }
+  }
+
   function alternar() {
     cambiarModo(real === 'oscuro' ? 'claro' : 'oscuro')
   }
 
-  return <TemaContexto.Provider value={{ modo, real, cambiarModo, alternar, setRol }}>{children}</TemaContexto.Provider>
+  return <TemaContexto.Provider value={{ modo, real, cambiarModo, alternar, setRol, estilo, cambiarEstilo }}>{children}</TemaContexto.Provider>
 }
 
 export function useTema() {

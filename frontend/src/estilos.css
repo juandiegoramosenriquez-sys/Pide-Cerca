@@ -2168,3 +2168,221 @@ body {
 .chip.chip-estado.activo .punto-estado {
   background: #FFFFFF;
 }
+
+.estilos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.estilo-opcion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 14px;
+  border: 2px solid var(--borde);
+  background: var(--tarj);
+  color: var(--t1);
+  text-align: left;
+}
+
+.estilo-opcion.activo {
+  border-color: var(--acento);
+}
+
+.estilo-opcion small {
+  font-size: 12px;
+  color: var(--t3);
+}
+
+.estilo-muestra {
+  width: 100%;
+  height: 54px;
+  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  border-radius: 10px;
+  background: var(--tarj-2);
+}
+
+.estilo-muestra i {
+  height: 12px;
+  border-radius: 6px;
+  background: var(--pri);
+}
+
+.estilo-muestra b {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--tarj);
+}
+
+.estilo-opcion.mercado .estilo-muestra {
+  border-radius: 4px;
+  background: #F6F2EA;
+}
+
+.estilo-opcion.mercado .estilo-muestra i {
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, var(--pri) 0 8px, #FFFFFF 8px 16px);
+  border: 1.5px solid var(--pri);
+}
+
+.estilo-opcion.mercado .estilo-muestra b {
+  border-radius: 2px;
+  background: #FFFFFF;
+  border: 1.5px solid #1F1A14;
+}
+
+:root[data-estilo='mercado'] {
+  --fuente: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radio: 8px;
+  --brillo: none;
+  --sombra: none;
+  --borde: color-mix(in srgb, var(--t1) 80%, transparent);
+}
+
+:root[data-estilo='mercado']:not([data-tema='oscuro']) {
+  --fondo: #F6F2EA;
+  --tarj-2: #EDE7DC;
+  --barra: var(--pri);
+  --destacada: var(--pri);
+}
+
+:root[data-estilo='mercado'][data-tema='oscuro'] {
+  --borde: color-mix(in srgb, var(--t1) 40%, transparent);
+}
+
+[data-estilo='mercado'] h1,
+[data-estilo='mercado'] h2,
+[data-estilo='mercado'] .barra-titulo,
+[data-estilo='mercado'] .numero,
+[data-estilo='mercado'] .numero-grande {
+  font-family: 'Archivo Narrow', var(--fuente);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+[data-estilo='mercado'] .barra::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -8px;
+  height: 8px;
+  background: repeating-linear-gradient(90deg, var(--acento) 0 18px, var(--fondo) 18px 36px);
+  border-bottom: 1.5px solid var(--acento);
+}
+
+[data-estilo='mercado'] .contenido {
+  padding-top: 26px;
+}
+
+[data-estilo='mercado'] .tarjeta,
+[data-estilo='mercado'] .filas,
+[data-estilo='mercado'] .metrica,
+[data-estilo='mercado'] .contador,
+[data-estilo='mercado'] .producto,
+[data-estilo='mercado'] .modal,
+[data-estilo='mercado'] .estilo-opcion {
+  border: 1.5px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: none;
+}
+
+[data-estilo='mercado'] .pedido {
+  border: 1.5px dashed var(--borde);
+  border-radius: 4px;
+  box-shadow: none;
+}
+
+[data-estilo='mercado'] .destacada,
+[data-estilo='mercado'] .perfil-cabecera,
+[data-estilo='mercado'] .metrica.destacada {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+[data-estilo='mercado'] .boton,
+[data-estilo='mercado'] .boton-icono,
+[data-estilo='mercado'] .chip,
+[data-estilo='mercado'] .barra-boton {
+  border-radius: 6px;
+}
+
+[data-estilo='mercado'] .boton.secundario,
+[data-estilo='mercado'] .boton.peligro,
+[data-estilo='mercado'] .boton-icono,
+[data-estilo='mercado'] .chip:not(.activo) {
+  border: 1.5px solid var(--borde);
+  box-shadow: none;
+}
+
+[data-estilo='mercado'] .boton.peligro {
+  border-color: var(--mal);
+}
+
+[data-estilo='mercado'] .busqueda-boton,
+[data-estilo='mercado'] .busqueda-compacta .boton-icono {
+  border-radius: 8px;
+  border: 1.5px solid var(--borde);
+  box-shadow: none;
+}
+
+[data-estilo='mercado'] input:not([type='checkbox']):not([type='radio']),
+[data-estilo='mercado'] textarea,
+[data-estilo='mercado'] select {
+  border-radius: 8px;
+  border: 1.5px solid var(--borde);
+}
+
+[data-estilo='mercado'] .segmento {
+  padding: 0;
+  gap: 0;
+  border-radius: 8px;
+  border: 1.5px solid var(--borde);
+  background: var(--tarj);
+  overflow: hidden;
+}
+
+[data-estilo='mercado'] .segmento button {
+  border-radius: 0;
+}
+
+[data-estilo='mercado'] .segmento button + button {
+  border-left: 1.5px solid var(--borde);
+}
+
+[data-estilo='mercado'] .segmento button.activo {
+  background: var(--t1);
+  color: var(--fondo);
+  box-shadow: none;
+}
+
+[data-estilo='mercado'] .horario-dias button {
+  border-radius: 6px;
+  border: 1.5px solid var(--borde);
+  box-shadow: none;
+}
+
+[data-estilo='mercado'] .estado {
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+[data-estilo='mercado'] .nav-abajo {
+  border-top: 1.5px solid var(--borde);
+}
+
+[data-estilo='mercado'] .lista > *,
+[data-estilo='mercado'] .grilla > *,
+[data-estilo='mercado'] .metricas > *,
+[data-estilo='mercado'] .contadores > * {
+  animation-duration: 0.2s;
+}

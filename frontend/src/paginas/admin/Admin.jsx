@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
-import { Check, History, LayoutDashboard, LogOut, Store, Users, X } from 'lucide-react'
+import { Check, History, LayoutDashboard, LogOut, Settings, Store, Users, X } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { useSesion } from '../../contexto/Sesion'
 import { Marco } from '../../componentes/Marco'
+import { PantallaCuenta } from '../../componentes/MiCuenta'
 import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
 import { cuando, haceCuanto, iniciales, soles } from '../../util/formato'
 
 export default function AdminArea() {
   const { usuario, salir } = useSesion()
   const [pendientes, setPendientes] = useState(0)
+  const [ajustes, setAjustes] = useState(false)
 
   const contar = useCallback(async () => {
     try {
@@ -42,10 +44,22 @@ export default function AdminArea() {
       sub={`${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim()}
       contexto={{ contar }}
       derecha={
-        <button className="barra-boton" onClick={salir} aria-label="Cerrar sesión">
-          <LogOut size={20} />
-          <span className="solo-escritorio">Salir</span>
-        </button>
+        <>
+          <button className="barra-boton" onClick={() => setAjustes(true)} aria-label="Ajustes">
+            <Settings size={20} />
+          </button>
+          <button className="barra-boton" onClick={salir} aria-label="Cerrar sesión">
+            <LogOut size={20} />
+            <span className="solo-escritorio">Salir</span>
+          </button>
+        </>
+      }
+      extra={
+        ajustes && (
+          <Modal titulo="Ajustes" alCerrar={() => setAjustes(false)}>
+            <PantallaCuenta />
+          </Modal>
+        )
       }
     />
   )

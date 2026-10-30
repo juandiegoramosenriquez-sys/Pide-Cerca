@@ -121,7 +121,7 @@ export function ClaveCuenta() {
 }
 
 export function PantallaCuenta() {
-  const { modo, cambiarModo } = useTema()
+  const { modo, cambiarModo, estilo, cambiarEstilo } = useTema()
   const modos = [
     { clave: 'claro', texto: 'Claro', icono: Sun },
     { clave: 'oscuro', texto: 'Oscuro', icono: Moon },
@@ -136,6 +136,23 @@ export function PantallaCuenta() {
           <button key={m.clave} type="button" role="radio" aria-checked={modo === m.clave} className={modo === m.clave ? 'activo' : ''} onClick={() => cambiarModo(m.clave)}>
             <m.icono size={18} />
             {m.texto}
+          </button>
+        ))}
+      </div>
+      <span className="mini" style={{ fontWeight: 700 }}>Estilo</span>
+      <div className="estilos" role="radiogroup" aria-label="Estilo de la web">
+        {[
+          { clave: 'moderno', texto: 'Moderno', detalle: 'Suave y redondeado' },
+          { clave: 'mercado', texto: 'Mercado', detalle: 'Como cartel de puesto' }
+        ].map((e) => (
+          <button key={e.clave} type="button" role="radio" aria-checked={estilo === e.clave} className={'estilo-opcion ' + e.clave + (estilo === e.clave ? ' activo' : '')} onClick={() => cambiarEstilo(e.clave)}>
+            <span className="estilo-muestra" aria-hidden="true">
+              <i />
+              <b />
+              <b />
+            </span>
+            <strong>{e.texto}</strong>
+            <small>{e.detalle}</small>
           </button>
         ))}
       </div>
