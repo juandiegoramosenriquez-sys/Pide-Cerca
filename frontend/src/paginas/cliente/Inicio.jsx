@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, Crosshair, List, Loader2, Map as IconoMapa, MapPin, Search, X } from 'lucide-react'
+import { Crosshair, List, Loader2, Map as IconoMapa, MapPin, Search, X } from 'lucide-react'
 import { api } from '../../api'
 import { Foto } from '../../componentes/Foto'
 import Mapa, { buscarZona, pedirGps } from '../../componentes/Mapa'
@@ -44,7 +44,7 @@ export default function Inicio() {
   const [buscandoZona, setBuscandoZona] = useState(false)
   const [usandoGps, setUsandoGps] = useState(false)
   const [buscando, setBuscando] = useState(false)
-  const [verCerrados, setVerCerrados] = useState(false)
+  const [grupo, setGrupo] = useState('abiertos')
 
   useEffect(() => {
     if (punto.nombre !== 'Mi ubicación') return
@@ -129,7 +129,7 @@ export default function Inicio() {
   const esGps = punto.nombre === 'Mi ubicación'
   const abiertos = visibles.filter((n) => n.abierto)
   const cerrados = visibles.filter((n) => !n.abierto)
-  const mostrarCerrados = verCerrados || abiertos.length === 0
+  const lista = grupo === 'abiertos' ? abiertos : cerrados
   const textoRadio = RADIOS.find((r) => r.valor === radio)?.texto
   const lugar = `${esGps ? 'Cerca de ti' : punto.nombre}${radio ? ' · ' + textoRadio : ''}`
 
@@ -176,6 +176,16 @@ export default function Inicio() {
         </div>
       )}
 
+      <div className="segmento" role="tablist" aria-label="Abiertos o cerrados">
+        <button type="button" role="tab" aria-selected={grupo === 'abiertos'} className={grupo === 'abiertos' ? 'activo' : ''} onClick={() => setGrupo('abiertos')}>
+          <span className="punto-vivo" />
+          Abiertos{negocios ? ` · ${abiertos.length}` : ''}
+        </button>
+        <button type="button" role="tab" aria-selected={grupo === 'cerrados'} className={grupo === 'cerrados' ? 'activo' : ''} onClick={() => setGrupo('cerrados')}>
+          Cerrados{negocios ? ` · ${cerrados.length}` : ''}
+        </button>
+      </div>
+
       <Error>{error}</Error>
 
       {negocios === null ? (
@@ -184,52 +194,22 @@ export default function Inicio() {
         <>
           {vista === 'mapa' && (
             <div className="mapa-borde">
-              <Mapa puestos={visibles} yo={punto} radio={radio} alto={360} alElegir={(n) => navegar(`/puesto/${n.id}`)} />
+              <Mapa puestos={lista} yo={punto} radio={radio} alto={360} alElegir={(n) => navegar(`/puesto/${n.id}`)} />
             </div>
           )}
 
-          {visibles.length === 0 ? (
-            <Vacio>{radio ? 'No hay puestos tan cerca. Prueba con una distancia mayor.' : 'No encontramos puestos con esa búsqueda.'}</Vacio>
+          {lista.length === 0 ? (
+            <Vacio>
+              {grupo === 'abiertos'
+                ? 'Ningún puesto abierto ahora por aquí. Prueba con otra distancia.'
+                : 'No hay puestos cerrados por aquí.'}
+            </Vacio>
           ) : (
-            <>
-              <section className="columna" style={{ gap: 10 }}>
-                <div className="seccion-titulo">
-                  <h2 className="fila" style={{ gap: 8 }}>
-                    <span className="punto-vivo" />
-                    Abiertos ahora
-                  </h2>
-                  <span>{abiertos.length}</span>
-                </div>
-                {abiertos.length === 0 ? (
-                  <Vacio>Ningún puesto abierto ahora por aquí.</Vacio>
-                ) : (
-                  <div className="lista">
-                    {abiertos.map((n) => (
-                      <TarjetaPuesto key={n.id} negocio={n} alElegir={() => navegar(`/puesto/${n.id}`)} />
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {cerrados.length > 0 && (
-                <section className="columna" style={{ gap: 10 }}>
-                  <button type="button" className="seccion-plegable" onClick={() => setVerCerrados(!verCerrados)} aria-expanded={mostrarCerrados}>
-                    <h2>Cerrados</h2>
-                    <span className="fila" style={{ gap: 6 }}>
-                      {cerrados.length}
-                      <ChevronDown size={20} style={{ transform: mostrarCerrados ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
-                    </span>
-                  </button>
-                  {mostrarCerrados && (
-                    <div className="lista cerrados">
-                      {cerrados.map((n) => (
-                        <TarjetaPuesto key={n.id} negocio={n} alElegir={() => navegar(`/puesto/${n.id}`)} />
-                      ))}
-                    </div>
-                  )}
-                </section>
-              )}
-            </>
+            <div className={'lista' + (grupo === 'cerrados' ? ' cerrados' : '')}>
+              {lista.map((n) => (
+                <TarjetaPuesto key={n.id} negocio={n} alElegir={() => navegar(`/puesto/${n.id}`)} />
+              ))}
+            </div>
           )}
         </>
       )}
