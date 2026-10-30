@@ -51,6 +51,14 @@ export default function AdminArea() {
   )
 }
 
+const COLOR_FILTRO = {
+  PENDIENTE: '#D97706',
+  EN_PREPARACION: '#2563EB',
+  LISTO_PARA_RECOGER: '#16A34A',
+  RECOGIDO: '#475569',
+  CANCELADO: '#B91C1C'
+}
+
 const ESTADOS_ORDEN = [
   ['PENDIENTE', 'Recibidos'],
   ['EN_PREPARACION', 'En proceso'],
@@ -62,13 +70,14 @@ const ESTADOS_ORDEN = [
 export function Resumen() {
   const [datos, setDatos] = useState(null)
   const [pedidos, setPedidos] = useState([])
+  const [filtro, setFiltro] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
     Promise.all([api('/admin/resumen'), api('/pedidos')])
       .then(([r, p]) => {
         setDatos(r)
-        setPedidos(p.slice(0, 10))
+        setPedidos(p)
       })
       .catch((e) => setError(e.message))
   }, [])
@@ -79,6 +88,8 @@ export function Resumen() {
   const enProceso = (porEstado.ACEPTADO || 0) + (porEstado.EN_PREPARACION || 0)
   const valor = (clave) => (clave === 'EN_PREPARACION' ? enProceso : porEstado[clave] || 0)
   const total = Math.max(1, ESTADOS_ORDEN.reduce((s, [c]) => s + valor(c), 0))
+  const grupoDe = (estado) => (estado === 'ACEPTADO' ? 'EN_PREPARACION' : estado)
+  const filtrados = pedidos.filter((p) => !filtro || grupoDe(p.estado) === filtro).slice(0, 15)
   const colores = { PENDIENTE: 'var(--rec-solido)', EN_PREPARACION: 'var(--pro-solido)', LISTO_PARA_RECOGER: 'var(--ok-solido)', RECOGIDO: 'var(--ent)', CANCELADO: 'var(--t3)' }
 
   return (
@@ -124,8 +135,25 @@ export function Resumen() {
 
       <section className="columna">
         <h2>Últimos pedidos</h2>
+        <div className="chips" role="group" aria-label="Filtrar pedidos por estado">
+          <button type="button" className={'chip' + (!filtro ? ' activo' : '')} onClick={() => setFiltro('')}>
+            Todos · {pedidos.length}
+          </button>
+          {ESTADOS_ORDEN.map(([clave, texto]) => (
+            <button
+              key={clave}
+              type="button"
+              className={'chip chip-estado' + (filtro === clave ? ' activo' : '')}
+              style={{ '--color-estado': COLOR_FILTRO[clave] }}
+              onClick={() => setFiltro(filtro === clave ? '' : clave)}
+            >
+              <span className="punto-estado" />
+              {texto} · {pedidos.filter((p) => grupoDe(p.estado) === clave).length}
+            </button>
+          ))}
+        </div>
         <div className="filas">
-          {pedidos.map((p) => (
+          {filtrados.map((p) => (
             <div key={p.id} className="fila-item">
               <span className="avatar">#{p.id}</span>
               <div className="fila-item-texto">
@@ -138,7 +166,7 @@ export function Resumen() {
               </div>
             </div>
           ))}
-          {pedidos.length === 0 && <p className="mini fila-item">Todavía no hay pedidos.</p>}
+          {filtrados.length === 0 && <p className="mini fila-item">{filtro ? 'No hay pedidos en este estado.' : 'Todavía no hay pedidos.'}</p>}
         </div>
       </section>
     </>

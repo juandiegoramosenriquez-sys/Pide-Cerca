@@ -2143,3 +2143,28 @@ body {
   font-weight: 600;
   color: var(--acento);
 }
+
+.punto-estado {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-estado);
+  flex-shrink: 0;
+}
+
+.chip-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip.chip-estado.activo {
+  background: var(--color-estado);
+  border-color: transparent;
+  color: #FFFFFF;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--color-estado) 60%, black);
+}
+
+.chip.chip-estado.activo .punto-estado {
+  background: #FFFFFF;
+}
