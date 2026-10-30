@@ -52,6 +52,15 @@ public class Negocio {
     @JsonIgnore
     private LocalDateTime fechaCambioNombre;
 
+    @JsonIgnore
+    private LocalDateTime ultimaConexion;
+
+    @JsonIgnore
+    private Integer pedidosSinResponder;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private String motivoCierre;
+
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Boolean ubicacionEnVivo;
 
@@ -60,7 +69,7 @@ public class Negocio {
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
-    @JsonIgnoreProperties({"correo", "telefono", "password", "rol", "activo", "fechaRegistro", "aceptoPrivacidad", "fechaPrivacidad"})
+    @JsonIgnoreProperties({"correo", "telefono", "password", "rol", "activo", "fechaRegistro", "aceptoPrivacidad", "fechaPrivacidad", "fechaCambioPassword"})
     private Usuario propietario;
 
     @Transient
@@ -212,6 +221,30 @@ public class Negocio {
 
     public void setUbicacionActualizada(LocalDateTime ubicacionActualizada) {
         this.ubicacionActualizada = ubicacionActualizada;
+    }
+
+    public LocalDateTime getUltimaConexion() {
+        return ultimaConexion;
+    }
+
+    public void setUltimaConexion(LocalDateTime ultimaConexion) {
+        this.ultimaConexion = ultimaConexion;
+    }
+
+    public Integer getPedidosSinResponder() {
+        return pedidosSinResponder;
+    }
+
+    public void setPedidosSinResponder(Integer pedidosSinResponder) {
+        this.pedidosSinResponder = pedidosSinResponder;
+    }
+
+    public String getMotivoCierre() {
+        return motivoCierre;
+    }
+
+    public void setMotivoCierre(String motivoCierre) {
+        this.motivoCierre = motivoCierre;
     }
 
     public LocalDateTime getFechaCambioNombre() {

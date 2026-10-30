@@ -20,4 +20,6 @@ public interface NegocioRepository extends JpaRepository<Negocio, Long> {
     long countByActivoTrueAndEstadoAprobacion(EstadoAprobacion estado);
 
     long countByEstadoAprobacion(EstadoAprobacion estado);
+
+    List<Negocio> findByAbiertoTrue();
 }

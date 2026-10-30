@@ -122,6 +122,13 @@ public class Pedido {
         this.fechaRecogido = fechaRecogido;
     }
 
+    public LocalDateTime getLimiteAceptar() {
+        if (estado != EstadoPedido.PENDIENTE || fecha == null) {
+            return null;
+        }
+        return fecha.plusMinutes(Limites.MINUTOS_PARA_ACEPTAR);
+    }
+
     public String getCodigo() {
         return codigo;
     }

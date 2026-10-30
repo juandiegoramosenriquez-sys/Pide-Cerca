@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { api } from '../../api'
@@ -6,6 +6,34 @@ import { useAviso } from '../../contexto/Aviso'
 import { BotonCarga, Error, Vacio } from '../../componentes/Ui'
 import { METODOS, soles } from '../../util/formato'
 import { useCliente } from './Cliente'
+
+function usePuestoAbierto(id) {
+  const [abierto, setAbierto] = useState(true)
+  useEffect(() => {
+    if (!id) return
+    let vigente = true
+    const revisar = () =>
+      api(`/negocios/${id}`)
+        .then((n) => vigente && setAbierto(Boolean(n.abierto)))
+        .catch(() => null)
+    revisar()
+    const intervalo = setInterval(revisar, 10000)
+    return () => {
+      vigente = false
+      clearInterval(intervalo)
+    }
+  }, [id])
+  return abierto
+}
+
+function AvisoCerrado() {
+  return (
+    <div className="aviso error columna" style={{ gap: 2, alignItems: 'flex-start' }}>
+      <b>Este puesto cerró</b>
+      <span>No se te cobró nada. Prueba con otro puesto cercano.</span>
+    </div>
+  )
+}
 
 const OPCIONES_PAGO = [
   { clave: 'YAPE', detalle: 'Paga con tu celular' },
@@ -22,6 +50,7 @@ export default function Carrito() {
   const [metodo, setMetodo] = useState('YAPE')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const abierto = usePuestoAbierto(carrito.negocio?.id)
 
   if (!carrito.items.length) {
     return (
@@ -116,10 +145,16 @@ export default function Carrito() {
         </div>
         <div className="aviso info">Pago de prueba: no se cobra dinero real.</div>
         {resumen}
-        <Error>{error}</Error>
-        <BotonCarga cargando={enviando} onClick={pagar}>
-          Pagar {soles(total)}
-        </BotonCarga>
+        {abierto ? <Error>{error}</Error> : <AvisoCerrado />}
+        {abierto ? (
+          <BotonCarga cargando={enviando} onClick={pagar}>
+            Pagar {soles(total)}
+          </BotonCarga>
+        ) : (
+          <button className="boton principal ancho" onClick={() => navegar('/')}>
+            Ver otros puestos
+          </button>
+        )}
       </>
     )
   }
@@ -153,9 +188,16 @@ export default function Carrito() {
         <textarea id="notas" placeholder="Sin cebolla, con harta crema…" value={carrito.notas} onChange={(e) => setNotas(e.target.value)} />
       </div>
       {resumen}
-      <button className="boton principal ancho" onClick={() => setPaso('pago')}>
-        Continuar al pago · {soles(total)}
-      </button>
+      {!abierto && <AvisoCerrado />}
+      {abierto ? (
+        <button className="boton principal ancho" onClick={() => setPaso('pago')}>
+          Continuar al pago · {soles(total)}
+        </button>
+      ) : (
+        <button className="boton principal ancho" onClick={() => navegar('/')}>
+          Ver otros puestos
+        </button>
+      )}
     </>
   )
 }

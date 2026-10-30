@@ -1692,3 +1692,27 @@ p {
   letter-spacing: 14px;
   height: 64px;
 }
+
+.cuenta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: var(--rec-bg);
+  color: var(--rec);
+}
+
+.pedido .cuenta {
+  align-self: flex-start;
+}
+
+.cuenta.urgente {
+  background: #C92A2A;
+  color: #FFFFFF;
+  animation: latido 1s ease-in-out infinite;
+}

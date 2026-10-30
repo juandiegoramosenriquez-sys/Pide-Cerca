@@ -133,7 +133,14 @@ export default function NegocioArea() {
   const recargar = useCallback(async () => {
     if (!aprobado) return
     try {
-      const datos = await api('/pedidos/negocio', { consulta: { activos: true } })
+      const [datos, actual] = await Promise.all([api('/pedidos/negocio', { consulta: { activos: true } }), api('/negocios/mio')])
+      setNegocio((n) => {
+        if (n && n.abierto && !actual.abierto && actual.motivoCierre) {
+          sonarAviso()
+          mostrar(actual.motivoCierre)
+        }
+        return n && n.abierto === actual.abierto && n.motivoCierre === actual.motivoCierre ? n : actual
+      })
       const nuevos = datos.filter((p) => p.estado === 'PENDIENTE').map((p) => p.id)
       if (conocidos.current) {
         const llegaron = nuevos.filter((id) => !conocidos.current.has(id))
@@ -152,6 +159,26 @@ export default function NegocioArea() {
       setCargandoPedidos(false)
     }
   }, [aprobado, mostrar])
+
+  const abierto = aprobado && negocio?.abierto
+
+  useEffect(() => {
+    if (!abierto || !('wakeLock' in navigator)) return
+    let candado = null
+    const pedir = () => {
+      if (document.visibilityState !== 'visible') return
+      navigator.wakeLock
+        .request('screen')
+        .then((c) => (candado = c))
+        .catch(() => null)
+    }
+    pedir()
+    document.addEventListener('visibilitychange', pedir)
+    return () => {
+      document.removeEventListener('visibilitychange', pedir)
+      candado?.release().catch(() => null)
+    }
+  }, [abierto])
 
   useEffect(() => {
     recargar()

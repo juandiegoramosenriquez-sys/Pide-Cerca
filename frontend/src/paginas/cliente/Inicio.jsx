@@ -125,7 +125,7 @@ export default function Inicio() {
   }, [texto, punto, radio])
 
   const tipos = useMemo(() => [...new Set((negocios || []).map((n) => n.tipoComida).filter(Boolean))], [negocios])
-  const visibles = (negocios || []).filter((n) => !tipo || n.tipoComida === tipo)
+  const visibles = (negocios || []).filter((n) => !tipo || n.tipoComida === tipo).sort((a, b) => Number(Boolean(b.abierto)) - Number(Boolean(a.abierto)))
   const esGps = punto.nombre === 'Mi ubicación'
 
   return (

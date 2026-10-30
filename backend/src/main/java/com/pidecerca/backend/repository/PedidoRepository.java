@@ -22,6 +22,8 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     List<Pedido> findByEstadoOrderByFechaDesc(EstadoPedido estado);
 
+    List<Pedido> findByEstadoAndFechaBefore(EstadoPedido estado, java.time.LocalDateTime fecha);
+
     long countByEstado(EstadoPedido estado);
 
     long countByFechaAfter(LocalDateTime fecha);

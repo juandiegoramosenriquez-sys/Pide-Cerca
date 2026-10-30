@@ -104,7 +104,7 @@ export default function Puesto() {
         </div>
       </section>
 
-      {!puedePedir && <div className="aviso alerta">Cerrado ahora.</div>}
+      {!puedePedir && <div className="aviso alerta">Cerrado ahora. No recibe pedidos.</div>}
 
       {negocio.latitud != null && negocio.longitud != null && (
         <section className="tarjeta columna" style={{ gap: 10, padding: 12 }}>

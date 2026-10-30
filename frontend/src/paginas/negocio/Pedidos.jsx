@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Check, Clock, Loader2, Plus, StickyNote } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
+import Cuenta from '../../componentes/Cuenta'
 import { Cargando, Estado, Modal, Vacio } from '../../componentes/Ui'
 import { ESTADOS, METODOS, avance, haceCuanto, minutosRestantes, nombreCorto, soles } from '../../util/formato'
 import { useNegocio } from './Negocio'
@@ -35,7 +36,7 @@ function useEsMovil() {
 }
 
 function TarjetaPedido({ pedido, ahora }) {
-  const { negocio, reemplazar, recientes } = useNegocio()
+  const { negocio, reemplazar, recientes, recargar } = useNegocio()
   const mostrar = useAviso()
   const [ocupado, setOcupado] = useState(false)
   const [minutos, setMinutos] = useState(pedido.tiempoPreparacion || negocio.tiempoEstimado || 15)
@@ -111,6 +112,7 @@ function TarjetaPedido({ pedido, ahora }) {
 
       {grupo === 'rec' && (
         <>
+          <Cuenta limite={pedido.limiteAceptar} texto="Acepta en" alTerminar={recargar} />
           <span className="sub">¿En cuánto estará listo?</span>
           <div className="tiempos">
             {TIEMPOS.map((m) => (
@@ -219,7 +221,9 @@ export default function PedidosNegocio() {
   return (
     <>
       <h1>Pedidos de hoy</h1>
-      {!negocio.abierto && <div className="aviso alerta">Tu puesto está cerrado. Toca “Cerrado” para abrir.</div>}
+      {!negocio.abierto && (
+        <div className="aviso alerta">{negocio.motivoCierre ? `${negocio.motivoCierre}. Toca “Cerrado” para abrir.` : 'Tu puesto está cerrado. Toca “Cerrado” para abrir.'}</div>
+      )}
 
       <div className="contadores">
         {GRUPOS.map((g) => (

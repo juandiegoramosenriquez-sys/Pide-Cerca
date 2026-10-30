@@ -74,3 +74,9 @@ export function fechaLarga(valor) {
   if (!valor) return ''
   return new Date(valor).toLocaleDateString('es-PE', { day: 'numeric', month: 'long' })
 }
+
+export function cuentaRegresiva(limite, ahora = Date.now()) {
+  if (!limite) return null
+  const segundos = Math.max(0, Math.ceil((new Date(limite).getTime() - ahora) / 1000))
+  return { segundos, texto: `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}` }
+}

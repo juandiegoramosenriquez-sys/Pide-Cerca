@@ -266,12 +266,40 @@ public class NegocioService {
         }
 
         negocio.setAbierto(abierto);
+        negocio.setMotivoCierre(null);
 
-        if (!abierto) {
+        if (abierto) {
+            negocio.setUltimaConexion(LocalDateTime.now());
+            negocio.setPedidosSinResponder(0);
+        } else {
             negocio.setUbicacionEnVivo(false);
         }
 
         return negocioRepository.save(negocio);
+    }
+
+    public void cerrarAutomatico(Negocio negocio, String motivo) {
+        negocio.setAbierto(false);
+        negocio.setUbicacionEnVivo(false);
+        negocio.setMotivoCierre(motivo);
+        negocioRepository.save(negocio);
+    }
+
+    @Transactional
+    public void cerrarSinConexion() {
+
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime limite = ahora.minusMinutes(Limites.MINUTOS_SIN_CONEXION);
+
+        for (Negocio negocio : negocioRepository.findByAbiertoTrue()) {
+            if (negocio.getUltimaConexion() == null) {
+                negocio.setUltimaConexion(ahora);
+                negocioRepository.save(negocio);
+            } else if (negocio.getUltimaConexion().isBefore(limite)) {
+                cerrarAutomatico(negocio, "Cerramos tu puesto porque estuviste "
+                        + Limites.MINUTOS_SIN_CONEXION + " minutos sin conexión");
+            }
+        }
     }
 
     public Negocio actualizarUbicacion(Usuario usuario, Double latitud, Double longitud, Boolean enVivo) {

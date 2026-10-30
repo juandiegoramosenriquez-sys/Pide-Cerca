@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
+import Cuenta from '../../componentes/Cuenta'
 import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
 import { METODOS, esActivo, fechaCorta, minutosRestantes, soles } from '../../util/formato'
 import { useCliente } from './Cliente'
@@ -17,7 +18,7 @@ function mensaje(pedido) {
   if (pedido.estado === 'PENDIENTE') return 'Esperando que el puesto acepte tu pedido'
   if (pedido.estado === 'LISTO_PARA_RECOGER') return '¡Listo! Acércate y di tu código'
   if (pedido.estado === 'RECOGIDO') return '¡Buen provecho! Gracias por usar PideCerca'
-  if (pedido.estado === 'CANCELADO') return pedido.motivoCancelacion ? `Cancelado: ${pedido.motivoCancelacion}` : 'Pedido cancelado'
+  if (pedido.estado === 'CANCELADO') return pedido.motivoCancelacion ? `${pedido.motivoCancelacion}. Te devolvimos tu dinero` : 'Pedido cancelado'
   const faltan = minutosRestantes(pedido)
   if (faltan === null) return 'Tu pedido se está preparando'
   return faltan > 0 ? `Estará listo en unos ${faltan} min` : 'Ya casi está listo'
@@ -79,6 +80,7 @@ export function SeguimientoPedido() {
         <span className="numero-grande" style={{ fontSize: 56 }}>#{pedido.id}</span>
         <Estado estado={pedido.estado} />
         <p style={{ fontWeight: 700, marginTop: 4 }}>{mensaje(pedido)}</p>
+        {pedido.estado === 'PENDIENTE' && <Cuenta limite={pedido.limiteAceptar} texto="Responde en" />}
         {pedido.codigo && esActivo(pedido.estado) && (
           <div className="codigo-entrega">
             <span>Código de entrega</span>

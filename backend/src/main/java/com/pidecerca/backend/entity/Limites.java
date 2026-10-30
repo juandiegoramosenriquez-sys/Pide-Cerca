@@ -8,6 +8,12 @@ public final class Limites {
 
     public static final int DIAS_ENTRE_CAMBIOS = 15;
 
+    public static final int MINUTOS_PARA_ACEPTAR = 5;
+
+    public static final int MINUTOS_SIN_CONEXION = 10;
+
+    public static final int PEDIDOS_SIN_RESPUESTA = 2;
+
     private static final DateTimeFormatter FORMATO =
             DateTimeFormatter.ofPattern("d 'de' MMMM", Locale.forLanguageTag("es-PE"));
 

@@ -73,6 +73,8 @@ public class PedidoService {
     public List<Pedido> listarDelNegocio(Usuario usuario, boolean soloActivos) {
 
         Negocio negocio = negocioService.obtenerDelPropietario(usuario);
+        negocio.setUltimaConexion(LocalDateTime.now());
+        negocioRepository.save(negocio);
 
         if (soloActivos) {
             return pedidoRepository.findByNegocioIdAndEstadoInOrderByFechaAsc(
@@ -120,7 +122,7 @@ public class PedidoService {
         }
 
         if (!Boolean.TRUE.equals(negocio.getAbierto())) {
-            throw ApiException.solicitudInvalida("El negocio está cerrado en este momento");
+            throw ApiException.solicitudInvalida("Este puesto cerró. No se te cobró nada");
         }
 
         String metodo = request.metodoPago() == null
@@ -231,6 +233,8 @@ public class PedidoService {
 
         pedido.setEstado(EstadoPedido.ACEPTADO);
         pedido.setFechaAceptado(LocalDateTime.now());
+        pedido.getNegocio().setPedidosSinResponder(0);
+        negocioRepository.save(pedido.getNegocio());
 
         Pedido guardado = pedidoRepository.save(pedido);
 
@@ -389,6 +393,32 @@ public class PedidoService {
         }
 
         return guardado;
+    }
+
+    @Transactional
+    public void vencerPendientes() {
+
+        LocalDateTime limite = LocalDateTime.now().minusMinutes(Limites.MINUTOS_PARA_ACEPTAR);
+
+        for (Pedido pedido : pedidoRepository.findByEstadoAndFechaBefore(EstadoPedido.PENDIENTE, limite)) {
+
+            cancelarConReembolso(pedido, "El puesto no respondió a tiempo");
+            Pedido guardado = pedidoRepository.save(pedido);
+
+            notificarCliente(guardado, "El puesto no respondió",
+                    "Tu pedido #" + guardado.getId() + " no fue aceptado a tiempo. Te devolvimos tu dinero");
+
+            Negocio negocio = guardado.getNegocio();
+            int sinResponder = (negocio.getPedidosSinResponder() == null ? 0 : negocio.getPedidosSinResponder()) + 1;
+            negocio.setPedidosSinResponder(sinResponder);
+
+            if (sinResponder >= Limites.PEDIDOS_SIN_RESPUESTA && Boolean.TRUE.equals(negocio.getAbierto())) {
+                negocioService.cerrarAutomatico(negocio, "Cerramos tu puesto porque no respondiste "
+                        + sinResponder + " pedidos");
+            } else {
+                negocioRepository.save(negocio);
+            }
+        }
     }
 
     private void cancelarConReembolso(Pedido pedido, String motivo) {
