@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { inicioDe, useSesion } from './contexto/Sesion'
 import { Cargando } from './componentes/Ui'
-import MiCuenta from './componentes/MiCuenta'
+import { BotonSalir, ClaveCuenta, DatosCuenta, PantallaCuenta } from './componentes/MiCuenta'
+import { iniciales } from './util/formato'
+import { Lock, Monitor, User } from 'lucide-react'
 import { Ingresar, RegistroCliente, RegistroNegocio } from './paginas/acceso/Acceso'
 import ClienteArea from './paginas/cliente/Cliente'
 import Inicio from './paginas/cliente/Inicio'
@@ -28,11 +31,42 @@ function SoloRol({ rol }) {
   return <Outlet />
 }
 
+const PESTANAS_PERFIL = [
+  { clave: 'datos', texto: 'Datos', icono: User },
+  { clave: 'clave', texto: 'Contraseña', icono: Lock },
+  { clave: 'pantalla', texto: 'Pantalla', icono: Monitor }
+]
+
 function PerfilCliente() {
+  const { usuario } = useSesion()
+  const [pestana, setPestana] = useState('datos')
+  const nombre = `${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim()
+
   return (
     <>
-      <h1>Mi perfil</h1>
-      <MiCuenta />
+      <section className="perfil-cabecera cliente">
+        <div className="perfil-cabecera-texto">
+          <span className="avatar">{iniciales(nombre)}</span>
+          <div style={{ minWidth: 0 }}>
+            <h1>{nombre}</h1>
+            <span style={{ opacity: 0.9, overflowWrap: 'anywhere' }}>{usuario?.correo}</span>
+          </div>
+        </div>
+      </section>
+
+      <div className="segmento" role="tablist" aria-label="Secciones de mi perfil">
+        {PESTANAS_PERFIL.map((p) => (
+          <button key={p.clave} type="button" role="tab" aria-selected={pestana === p.clave} className={pestana === p.clave ? 'activo' : ''} onClick={() => setPestana(p.clave)}>
+            <p.icono size={18} />
+            {p.texto}
+          </button>
+        ))}
+      </div>
+
+      {pestana === 'datos' && <DatosCuenta />}
+      {pestana === 'clave' && <ClaveCuenta />}
+      {pestana === 'pantalla' && <PantallaCuenta />}
+      <BotonSalir />
     </>
   )
 }

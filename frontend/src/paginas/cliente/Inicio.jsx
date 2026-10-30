@@ -130,62 +130,45 @@ export default function Inicio() {
 
   return (
     <>
-      <div>
-        <h1>¿Qué se te antoja hoy?</h1>
-        <p className="sub fila" style={{ gap: 6 }}>
-          <MapPin size={16} />
-          {esGps ? 'Cerca de ti' : `Cerca de: ${punto.nombre}`}
-        </p>
-      </div>
-
-      <div className="fila" style={{ gap: 8 }}>
-        <button className={'boton ' + (esGps ? 'secundario' : 'principal')} style={{ flex: 1 }} onClick={usarGps} disabled={usandoGps}>
-          {usandoGps ? <Loader2 className="giro" size={20} /> : <Crosshair size={20} />}
-          {esGps ? 'Actualizar mi GPS' : 'Usar mi GPS'}
-        </button>
-        <button
-          className="boton-icono"
-          style={{ width: 52, height: 52 }}
-          onClick={() => cambiarVista(vista === 'lista' ? 'mapa' : 'lista')}
-          aria-label={vista === 'lista' ? 'Ver en el mapa' : 'Ver en lista'}
-          title={vista === 'lista' ? 'Ver en el mapa' : 'Ver en lista'}
-        >
-          {vista === 'lista' ? <IconoMapa size={22} /> : <List size={22} />}
-        </button>
-      </div>
-
-      <form onSubmit={buscarPorZona} className="fila" style={{ gap: 8 }}>
-        <input
-          className="buscador"
-          placeholder="¿Otra zona? Ej: Miraflores, Av. Grau…"
-          value={zona}
-          onChange={(e) => setZona(e.target.value)}
-          aria-label="Buscar por zona"
-        />
-        <button className="boton secundario" disabled={buscandoZona} aria-label="Buscar zona">
-          {buscandoZona ? <Loader2 className="giro" size={20} /> : <MapPin size={20} />}
-        </button>
-      </form>
-
-      <div className="chips" role="group" aria-label="Distancia">
-        {RADIOS.map((r) => (
-          <button key={r.valor} className={'chip' + (radio === r.valor ? ' activo' : '')} onClick={() => cambiarRadio(r.valor)}>
-            {r.texto}
-          </button>
-        ))}
-      </div>
+      <h1>¿Qué se te antoja hoy?</h1>
 
       <div style={{ position: 'relative' }}>
         <Search size={20} style={{ position: 'absolute', left: 14, top: 16, color: 'var(--t3)' }} />
         <input
           className="buscador"
           style={{ paddingLeft: 44 }}
-          placeholder="Buscar salchipapa, pollo, anticuchos…"
+          placeholder="Salchipapa, pollo, anticuchos…"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           aria-label="Buscar puestos"
         />
       </div>
+
+      <section className="tarjeta filtros">
+        <div className="fila entre">
+          <span className="fila" style={{ gap: 6, fontWeight: 700, minWidth: 0 }}>
+            <MapPin size={18} style={{ color: 'var(--acento)', flexShrink: 0 }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{esGps ? 'Cerca de ti' : punto.nombre}</span>
+          </span>
+          <button className="boton secundario chico" onClick={usarGps} disabled={usandoGps}>
+            {usandoGps ? <Loader2 className="giro" size={18} /> : <Crosshair size={18} />}
+            {esGps ? 'Actualizar' : 'Mi GPS'}
+          </button>
+        </div>
+        <form onSubmit={buscarPorZona} className="filtros-zona">
+          <input className="buscador" placeholder="Otra zona: Miraflores, Av. Grau…" value={zona} onChange={(e) => setZona(e.target.value)} aria-label="Buscar por zona" />
+          <button className="boton secundario" disabled={buscandoZona} aria-label="Buscar zona">
+            {buscandoZona ? <Loader2 className="giro" size={20} /> : <Search size={20} />}
+          </button>
+        </form>
+        <div className="segmento chico" role="group" aria-label="Distancia">
+          {RADIOS.map((r) => (
+            <button key={r.valor} type="button" className={radio === r.valor ? 'activo' : ''} aria-pressed={radio === r.valor} onClick={() => cambiarRadio(r.valor)}>
+              {r.texto}
+            </button>
+          ))}
+        </div>
+      </section>
 
       {tipos.length > 1 && (
         <div className="chips">
@@ -199,6 +182,20 @@ export default function Inicio() {
           ))}
         </div>
       )}
+
+      <div className="resultados-cabecera">
+        <h2>{negocios === null ? 'Puestos' : `${visibles.length} ${visibles.length === 1 ? 'puesto' : 'puestos'}`}</h2>
+        <div className="segmento chico" role="group" aria-label="Vista">
+          <button type="button" className={vista === 'lista' ? 'activo' : ''} aria-pressed={vista === 'lista'} onClick={() => cambiarVista('lista')}>
+            <List size={16} />
+            Lista
+          </button>
+          <button type="button" className={vista === 'mapa' ? 'activo' : ''} aria-pressed={vista === 'mapa'} onClick={() => cambiarVista('mapa')}>
+            <IconoMapa size={16} />
+            Mapa
+          </button>
+        </div>
+      </div>
 
       <Error>{error}</Error>
 
