@@ -117,3 +117,11 @@ export function horarioTexto(negocio) {
   if (!dias) return ''
   return `${dias} · ${hora12(negocio.horaApertura)} a ${hora12(negocio.horaCierre)}`
 }
+
+export function horarioError(valor) {
+  if (!valor?.diasAtencion) return ''
+  if (!valor.diasAtencion.includes('1')) return 'Elige al menos un día'
+  if (!valor.horaApertura || !valor.horaCierre) return 'Elige la hora en que abres y cierras'
+  if (valor.horaApertura === valor.horaCierre) return 'La hora de cierre tiene que ser distinta a la de apertura'
+  return ''
+}

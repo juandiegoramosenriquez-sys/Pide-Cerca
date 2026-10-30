@@ -1,4 +1,4 @@
-import { horarioTexto } from '../util/formato'
+import { horarioError, horarioTexto } from '../util/formato'
 
 const DIAS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 const NOMBRES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -64,7 +64,14 @@ export default function SelectorHorario({ valor, alCambiar }) {
           <input id="h-cierra" type="time" value={valor.horaCierre} onChange={(e) => e.target.value && cambiar({ horaCierre: e.target.value })} />
         </div>
       </div>
-      <div className="horario-resumen">{horarioTexto(valor) || 'Elige al menos un día'}</div>
+      {horarioError(valor) ? (
+        <div className="horario-resumen error">{horarioError(valor)}</div>
+      ) : (
+        <div className="horario-resumen">
+          {horarioTexto(valor)}
+          {valor.horaCierre < valor.horaApertura && <small>Cierras después de medianoche</small>}
+        </div>
+      )}
     </div>
   )
 }

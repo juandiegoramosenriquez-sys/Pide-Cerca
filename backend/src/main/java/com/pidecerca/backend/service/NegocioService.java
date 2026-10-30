@@ -388,6 +388,14 @@ public class NegocioService {
         destino.setHoraApertura(valido(origen.getHoraApertura(), "([01][0-9]|2[0-3]):[0-5][0-9]"));
         destino.setHoraCierre(valido(origen.getHoraCierre(), "([01][0-9]|2[0-3]):[0-5][0-9]"));
 
+        if ("0000000".equals(destino.getDiasAtencion())) {
+            throw ApiException.solicitudInvalida("Elige al menos un día de atención");
+        }
+
+        if (destino.getHoraApertura() != null && destino.getHoraApertura().equals(destino.getHoraCierre())) {
+            throw ApiException.solicitudInvalida("La hora de cierre tiene que ser distinta a la de apertura");
+        }
+
         if (origen.getLatitud() != null) {
             if (origen.getLatitud() < -90 || origen.getLatitud() > 90) {
                 throw ApiException.solicitudInvalida("La latitud no es válida");

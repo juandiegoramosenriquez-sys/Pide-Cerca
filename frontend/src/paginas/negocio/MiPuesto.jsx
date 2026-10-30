@@ -7,7 +7,7 @@ import MiCuenta from '../../componentes/MiCuenta'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import SelectorHorario, { horarioDe } from '../../componentes/SelectorHorario'
 import { BotonCarga, Error, Interruptor } from '../../componentes/Ui'
-import { fechaLarga, haceCuanto } from '../../util/formato'
+import { fechaLarga, haceCuanto, horarioError } from '../../util/formato'
 import { urlImagen } from '../../util/imagen'
 import { useNegocio } from './Negocio'
 
@@ -44,6 +44,7 @@ function useGuardarPuesto() {
     const datos = { ...datosDe(negocio), ...cambios }
     setError('')
     if (!datos.nombre.trim()) return setError('Escribe el nombre del puesto')
+    if (horarioError(datos)) return setError(horarioError(datos))
     setGuardando(true)
     try {
       const n = await api('/negocios/mio', {

@@ -2093,3 +2093,15 @@ body {
   font-weight: 800;
   text-align: center;
 }
+
+.horario-resumen small {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.horario-resumen.error {
+  background: color-mix(in srgb, var(--mal) 12%, transparent);
+  color: var(--mal);
+}

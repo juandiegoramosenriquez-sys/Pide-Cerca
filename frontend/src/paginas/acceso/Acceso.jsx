@@ -7,7 +7,7 @@ import { BotonTema } from '../../componentes/Marco'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import { BotonCarga, Error } from '../../componentes/Ui'
 import SelectorHorario, { HORARIO_INICIAL } from '../../componentes/SelectorHorario'
-import { horarioTexto } from '../../util/formato'
+import { horarioError, horarioTexto } from '../../util/formato'
 import { pedirPermisoNotificaciones } from '../../util/sonido'
 
 function Cabecera() {
@@ -204,6 +204,7 @@ export function RegistroNegocio() {
     if (!dueno.correo.includes('@')) return setError('Escribe un correo válido')
     if (dueno.password.length < 6) return setError('La contraseña debe tener al menos 6 caracteres')
     if (!puesto.nombre.trim()) return setError('Escribe el nombre de tu puesto')
+    if (horarioError(puesto)) return setError(horarioError(puesto))
     if (puesto.latitud === '' || puesto.longitud === '') return setError('Marca en el mapa dónde está tu puesto, así los clientes te encuentran')
     if (!acepto) return setError('Debes aceptar el aviso de privacidad')
     setEnviando(true)
