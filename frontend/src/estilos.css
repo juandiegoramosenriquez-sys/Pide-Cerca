@@ -1955,3 +1955,29 @@ textarea {
   transform: translateY(2px);
   box-shadow: none;
 }
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body {
+  overflow-x: clip;
+}
+
+.contenido > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 560px) {
+  .contenido > .mapa-borde {
+    max-width: none;
+    margin: 0 -16px;
+  }
+
+  .mapa-borde .mapa {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}

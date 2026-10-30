@@ -184,7 +184,11 @@ export default function Inicio() {
         <Cargando />
       ) : (
         <>
-          {vista === 'mapa' && <Mapa puestos={visibles} yo={punto} radio={radio} alto={360} alElegir={(n) => navegar(`/puesto/${n.id}`)} />}
+          {vista === 'mapa' && (
+            <div className="mapa-borde">
+              <Mapa puestos={visibles} yo={punto} radio={radio} alto={360} alElegir={(n) => navegar(`/puesto/${n.id}`)} />
+            </div>
+          )}
 
           {visibles.length === 0 ? (
             <Vacio>{radio ? 'No hay puestos tan cerca. Prueba con una distancia mayor.' : 'No encontramos puestos con esa búsqueda.'}</Vacio>
