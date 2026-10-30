@@ -176,16 +176,6 @@ export default function Inicio() {
         </div>
       )}
 
-      <div className="segmento" role="tablist" aria-label="Abiertos o cerrados">
-        <button type="button" role="tab" aria-selected={grupo === 'abiertos'} className={grupo === 'abiertos' ? 'activo' : ''} onClick={() => setGrupo('abiertos')}>
-          <span className="punto-vivo" />
-          Abiertos{negocios ? ` · ${abiertos.length}` : ''}
-        </button>
-        <button type="button" role="tab" aria-selected={grupo === 'cerrados'} className={grupo === 'cerrados' ? 'activo' : ''} onClick={() => setGrupo('cerrados')}>
-          Cerrados{negocios ? ` · ${cerrados.length}` : ''}
-        </button>
-      </div>
-
       <Error>{error}</Error>
 
       {negocios === null ? (
@@ -197,6 +187,16 @@ export default function Inicio() {
               <Mapa puestos={lista} yo={punto} radio={radio} alto={360} alElegir={(n) => navegar(`/puesto/${n.id}`)} />
             </div>
           )}
+
+          <div className="segmento" role="tablist" aria-label="Abiertos o cerrados">
+            <button type="button" role="tab" aria-selected={grupo === 'abiertos'} className={grupo === 'abiertos' ? 'activo' : ''} onClick={() => setGrupo('abiertos')}>
+              <span className="punto-vivo" />
+              Abiertos{negocios ? ` · ${abiertos.length}` : ''}
+            </button>
+            <button type="button" role="tab" aria-selected={grupo === 'cerrados'} className={grupo === 'cerrados' ? 'activo' : ''} onClick={() => setGrupo('cerrados')}>
+              Cerrados{negocios ? ` · ${cerrados.length}` : ''}
+            </button>
+          </div>
 
           {lista.length === 0 ? (
             <Vacio>
