@@ -1,6 +1,6 @@
 @echo off
 title PideCerca - Ver en el celular por cable
-set "ADB=%LOCALAPPDATA%\Android\Sdk\platform-toolsdb.exe"
+set "ADB=%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe"
 if not exist "%ADB%" (
   echo No se encontro adb. Instala Android Studio o las "platform-tools" de Android.
   pause
