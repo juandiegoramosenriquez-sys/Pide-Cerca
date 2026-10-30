@@ -6,6 +6,8 @@ import { useRolVisual } from '../../contexto/Tema'
 import { BotonTema } from '../../componentes/Marco'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import { BotonCarga, Error } from '../../componentes/Ui'
+import SelectorHorario, { HORARIO_INICIAL } from '../../componentes/SelectorHorario'
+import { horarioTexto } from '../../util/formato'
 import { pedirPermisoNotificaciones } from '../../util/sonido'
 
 function Cabecera() {
@@ -190,7 +192,7 @@ export function RegistroNegocio() {
   const { registrarNegocio } = useSesion()
   const navegar = useNavigate()
   const [dueno, setDueno] = useState({ nombre: '', apellido: '', correo: '', telefono: '', password: '' })
-  const [puesto, setPuesto] = useState({ nombre: '', tipoComida: '', direccion: '', horario: '', latitud: '', longitud: '' })
+  const [puesto, setPuesto] = useState({ nombre: '', tipoComida: '', direccion: '', ...HORARIO_INICIAL, horario: horarioTexto(HORARIO_INICIAL), latitud: '', longitud: '' })
   const [acepto, setAcepto] = useState(false)
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
@@ -271,8 +273,8 @@ export function RegistroNegocio() {
             <span className="ayuda">Puedes agregar una referencia.</span>
           </div>
           <div className="campo">
-            <label htmlFor="n-horario">Horario</label>
-            <input id="n-horario" placeholder="Lun a Dom · 6 pm a 11 pm" value={puesto.horario} onChange={(e) => setPuesto({ ...puesto, horario: e.target.value })} />
+            <label>Horario</label>
+            <SelectorHorario valor={puesto} alCambiar={(h) => setPuesto((p) => ({ ...p, ...h }))} />
           </div>
           <AvisoPrivacidad acepto={acepto} alCambiar={setAcepto} />
           <BotonCarga cargando={enviando}>Enviar solicitud</BotonCarga>

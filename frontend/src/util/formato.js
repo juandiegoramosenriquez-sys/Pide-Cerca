@@ -91,3 +91,29 @@ export function cuando(valor, ahora = new Date()) {
   if (diferencia === 1) return `Ayer · ${hora}`
   return `${f.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', '')} · ${hora}`
 }
+
+const DIAS_CORTOS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+
+export function hora12(valor) {
+  if (!valor) return ''
+  const [h, m] = valor.split(':').map(Number)
+  const sufijo = h < 12 ? 'am' : 'pm'
+  const hora = h % 12 === 0 ? 12 : h % 12
+  return m ? `${hora}:${String(m).padStart(2, '0')} ${sufijo}` : `${hora} ${sufijo}`
+}
+
+export function diasTexto(dias) {
+  if (!dias || !dias.includes('1')) return ''
+  if (dias === '1111111') return 'Todos los días'
+  const activos = dias.split('').map((d, i) => (d === '1' ? i : -1)).filter((i) => i >= 0)
+  const seguidos = activos.every((d, i) => i === 0 || d === activos[i - 1] + 1)
+  if (seguidos && activos.length > 2) return `${DIAS_CORTOS[activos[0]]} a ${DIAS_CORTOS[activos[activos.length - 1]]}`
+  return activos.map((i) => DIAS_CORTOS[i]).join(', ')
+}
+
+export function horarioTexto(negocio) {
+  if (!negocio?.diasAtencion) return negocio?.horario || ''
+  const dias = diasTexto(negocio.diasAtencion)
+  if (!dias) return ''
+  return `${dias} · ${hora12(negocio.horaApertura)} a ${hora12(negocio.horaCierre)}`
+}

@@ -29,6 +29,15 @@ public class Negocio {
 
     private String fotoDueno;
 
+    @Column(length = 7)
+    private String diasAtencion;
+
+    @Column(length = 5)
+    private String horaApertura;
+
+    @Column(length = 5)
+    private String horaCierre;
+
     private String horario;
 
     private Double latitud;
@@ -135,6 +144,30 @@ public class Negocio {
 
     public void setImagen(String imagen) {
         this.imagen = imagen;
+    }
+
+    public String getDiasAtencion() {
+        return diasAtencion;
+    }
+
+    public void setDiasAtencion(String diasAtencion) {
+        this.diasAtencion = diasAtencion;
+    }
+
+    public String getHoraApertura() {
+        return horaApertura;
+    }
+
+    public void setHoraApertura(String horaApertura) {
+        this.horaApertura = horaApertura;
+    }
+
+    public String getHoraCierre() {
+        return horaCierre;
+    }
+
+    public void setHoraCierre(String horaCierre) {
+        this.horaCierre = horaCierre;
     }
 
     public String getFotoDueno() {

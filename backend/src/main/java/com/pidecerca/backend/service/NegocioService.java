@@ -361,6 +361,10 @@ public class NegocioService {
         negocioRepository.delete(negocio);
     }
 
+    private static String valido(String valor, String patron) {
+        return valor != null && valor.matches(patron) ? valor : null;
+    }
+
     private void copiarDatos(Negocio origen, Negocio destino) {
 
         String nombre = AuthService.texto(origen.getNombre());
@@ -380,6 +384,9 @@ public class NegocioService {
         destino.setImagen(AuthService.texto(origen.getImagen()));
         destino.setFotoDueno(AuthService.texto(origen.getFotoDueno()));
         destino.setHorario(AuthService.texto(origen.getHorario()));
+        destino.setDiasAtencion(valido(origen.getDiasAtencion(), "[01]{7}"));
+        destino.setHoraApertura(valido(origen.getHoraApertura(), "([01][0-9]|2[0-3]):[0-5][0-9]"));
+        destino.setHoraCierre(valido(origen.getHoraCierre(), "([01][0-9]|2[0-3]):[0-5][0-9]"));
 
         if (origen.getLatitud() != null) {
             if (origen.getLatitud() < -90 || origen.getLatitud() > 90) {

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Clock, MapPin, Navigation, Plus, X } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Clock, MapPin, Navigation, Plus, X } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { Foto } from '../../componentes/Foto'
 import Mapa, { enlaceComoLlegar } from '../../componentes/Mapa'
 import { urlImagen } from '../../util/imagen'
 import { Cargando, Error, Modal } from '../../componentes/Ui'
-import { haceCuanto, iniciales, soles } from '../../util/formato'
+import { haceCuanto, horarioTexto, iniciales, soles } from '../../util/formato'
 
 function puntoGuardado() {
   try {
@@ -104,6 +104,12 @@ export default function Puesto() {
             <span className="fila" style={{ gap: 6 }}>
               <Clock size={16} />
               Listo en {negocio.tiempoEstimado} min
+            </span>
+          )}
+          {horarioTexto(negocio) && (
+            <span className="fila" style={{ gap: 6 }}>
+              <CalendarClock size={16} />
+              {horarioTexto(negocio)}
             </span>
           )}
           {negocio.direccion && (

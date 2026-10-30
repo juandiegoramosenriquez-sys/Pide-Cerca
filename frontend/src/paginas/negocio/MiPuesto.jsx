@@ -5,6 +5,7 @@ import { useAviso } from '../../contexto/Aviso'
 import { SubirFoto } from '../../componentes/Foto'
 import MiCuenta from '../../componentes/MiCuenta'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
+import SelectorHorario, { horarioDe } from '../../componentes/SelectorHorario'
 import { BotonCarga, Error, Interruptor } from '../../componentes/Ui'
 import { fechaLarga, haceCuanto } from '../../util/formato'
 import { urlImagen } from '../../util/imagen'
@@ -24,6 +25,7 @@ function datosDe(negocio) {
     direccion: negocio.direccion || '',
     telefono: negocio.telefono || '',
     horario: negocio.horario || '',
+    ...horarioDe(negocio),
     imagen: negocio.imagen || '',
     fotoDueno: negocio.fotoDueno || '',
     tiempoEstimado: negocio.tiempoEstimado || 15,
@@ -122,8 +124,8 @@ function PestanaPuesto() {
       <section className="tarjeta formulario">
         <h2>Atención</h2>
         <div className="campo">
-          <label htmlFor="mp-hor">Horario</label>
-          <input id="mp-hor" value={datos.horario} onChange={(e) => cambiar('horario', e.target.value)} placeholder="Lun a Sáb · 5 pm a 11 pm" />
+          <label>Horario</label>
+          <SelectorHorario valor={datos} alCambiar={(h) => setDatos((d) => ({ ...d, ...h }))} />
         </div>
         <div className="dos" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           <div className="campo">

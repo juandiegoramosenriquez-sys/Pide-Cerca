@@ -1970,12 +1970,11 @@ body {
 }
 
 @media (max-width: 560px) {
-  .contenido > .mapa-borde {
+  .mapa {
+    width: 100vw;
     max-width: none;
-    margin: 0 -16px;
-  }
-
-  .mapa-borde .mapa {
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
     border-radius: 0;
     border-left: 0;
     border-right: 0;
@@ -2048,4 +2047,49 @@ body {
   color: #FFFFFF;
   display: grid;
   place-items: center;
+}
+
+.horario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.horario-dias {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.horario-dias button {
+  aspect-ratio: 1;
+  max-height: 48px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--t3) 50%, transparent);
+  background: var(--tarj);
+  color: var(--t2);
+  font-weight: 800;
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--t3) 35%, transparent);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.horario-dias button.activo {
+  background: var(--acento);
+  border-color: transparent;
+  color: var(--sobre-acento);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--acento) 60%, black);
+}
+
+.horario-dias button:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.horario-resumen {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--cont);
+  color: var(--cont-t);
+  font-weight: 800;
+  text-align: center;
 }

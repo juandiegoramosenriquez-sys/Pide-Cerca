@@ -8,6 +8,7 @@ import { useRolVisual } from '../../contexto/Tema'
 import { Barra, Marco } from '../../componentes/Marco'
 import { Cargando } from '../../componentes/Ui'
 import { notificarSistema, sonarAviso } from '../../util/sonido'
+import { horarioTexto } from '../../util/formato'
 
 const NegocioContexto = createContext(null)
 
@@ -37,7 +38,7 @@ function EnRevision({ negocio }) {
           <p>{negocio.nombre}</p>
           {negocio.tipoComida && <p className="sub">{negocio.tipoComida}</p>}
           {negocio.direccion && <p className="sub">{negocio.direccion}</p>}
-          {negocio.horario && <p className="sub">{negocio.horario}</p>}
+          {horarioTexto(negocio) && <p className="sub">{horarioTexto(negocio)}</p>}
         </section>
         <button className="boton secundario" onClick={() => window.location.reload()}>
           Volver a revisar
