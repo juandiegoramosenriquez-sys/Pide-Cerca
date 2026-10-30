@@ -27,7 +27,6 @@ function datosDe(negocio) {
     horario: negocio.horario || '',
     ...horarioDe(negocio),
     imagen: negocio.imagen || '',
-    fotoDueno: negocio.fotoDueno || '',
     tiempoEstimado: negocio.tiempoEstimado || 15,
     latitud: negocio.latitud ?? '',
     longitud: negocio.longitud ?? ''
@@ -85,16 +84,8 @@ function PestanaPuesto() {
       }}
     >
       <section className="tarjeta formulario">
-        <h2>Fotos</h2>
-        <div className="campo">
-          <label>Tu puesto</label>
-          <SubirFoto valor={datos.imagen} alCambiar={(v) => cambiar('imagen', v)} texto="Agregar foto del puesto" alto={180} />
-        </div>
-        <div className="campo">
-          <label>Tú</label>
-          <SubirFoto valor={datos.fotoDueno} alCambiar={(v) => cambiar('fotoDueno', v)} texto="Agregar tu foto (opcional)" alto={150} />
-          <span className="ayuda">Los clientes confían más cuando ven quién atiende.</span>
-        </div>
+        <h2>Foto del puesto</h2>
+        <SubirFoto valor={datos.imagen} alCambiar={(v) => cambiar('imagen', v)} texto="Agregar foto del puesto" alto={180} />
       </section>
 
       <section className="tarjeta formulario">

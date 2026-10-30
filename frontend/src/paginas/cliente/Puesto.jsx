@@ -67,7 +67,7 @@ export default function Puesto() {
   if (!negocio) return <Cargando />
 
   const puedePedir = negocio.abierto
-  const fotoAvatar = urlImagen(negocio.fotoDueno || negocio.imagen)
+  const fotoAvatar = urlImagen(negocio.imagen)
   const duena = negocio.propietario?.nombre
 
   return (

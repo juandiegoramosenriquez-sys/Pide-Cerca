@@ -294,7 +294,7 @@ export default function Inicio() {
 function TarjetaPuesto({ negocio: n, alElegir }) {
   return (
     <button className="tarjeta tocable fila" style={{ gap: 14 }} onClick={alElegir}>
-      <Foto src={n.imagen || n.fotoDueno} tamano={60} texto={iniciales(n.nombre)} />
+      <Foto src={n.imagen} tamano={60} texto={iniciales(n.nombre)} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <h3 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.nombre}</h3>
         <span className="sub" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

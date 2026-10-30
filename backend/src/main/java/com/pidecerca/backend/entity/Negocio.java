@@ -27,8 +27,6 @@ public class Negocio {
 
     private String imagen;
 
-    private String fotoDueno;
-
     @Column(length = 7)
     private String diasAtencion;
 
@@ -168,14 +166,6 @@ public class Negocio {
 
     public void setHoraCierre(String horaCierre) {
         this.horaCierre = horaCierre;
-    }
-
-    public String getFotoDueno() {
-        return fotoDueno;
-    }
-
-    public void setFotoDueno(String fotoDueno) {
-        this.fotoDueno = fotoDueno;
     }
 
     public String getHorario() {

@@ -382,7 +382,6 @@ public class NegocioService {
         destino.setDireccion(AuthService.texto(origen.getDireccion()));
         destino.setTelefono(AuthService.texto(origen.getTelefono()));
         destino.setImagen(AuthService.texto(origen.getImagen()));
-        destino.setFotoDueno(AuthService.texto(origen.getFotoDueno()));
         destino.setHorario(AuthService.texto(origen.getHorario()));
         destino.setDiasAtencion(valido(origen.getDiasAtencion(), "[01]{7}"));
         destino.setHoraApertura(valido(origen.getHoraApertura(), "([01][0-9]|2[0-3]):[0-5][0-9]"));
