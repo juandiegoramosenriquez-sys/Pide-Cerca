@@ -27,6 +27,8 @@ public class Negocio {
 
     private String imagen;
 
+    private String fotoDueno;
+
     private String horario;
 
     private Double latitud;
@@ -133,6 +135,14 @@ public class Negocio {
 
     public void setImagen(String imagen) {
         this.imagen = imagen;
+    }
+
+    public String getFotoDueno() {
+        return fotoDueno;
+    }
+
+    public void setFotoDueno(String fotoDueno) {
+        this.fotoDueno = fotoDueno;
     }
 
     public String getHorario() {

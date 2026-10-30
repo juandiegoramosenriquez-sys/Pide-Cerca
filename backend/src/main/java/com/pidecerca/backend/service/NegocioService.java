@@ -378,6 +378,7 @@ public class NegocioService {
         destino.setDireccion(AuthService.texto(origen.getDireccion()));
         destino.setTelefono(AuthService.texto(origen.getTelefono()));
         destino.setImagen(AuthService.texto(origen.getImagen()));
+        destino.setFotoDueno(AuthService.texto(origen.getFotoDueno()));
         destino.setHorario(AuthService.texto(origen.getHorario()));
 
         if (origen.getLatitud() != null) {

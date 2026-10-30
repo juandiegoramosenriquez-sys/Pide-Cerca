@@ -41,7 +41,6 @@ export default function Inicio() {
   const [punto, setPunto] = useState(() => leerPreferencia('pidecerca_punto', CENTRO_LIMA))
   const [radio, setRadio] = useState(() => leerPreferencia('pidecerca_radio', 0))
   const [vista, setVista] = useState(() => leerPreferencia('pidecerca_vista', 'lista'))
-  const [zona, setZona] = useState('')
   const [buscandoZona, setBuscandoZona] = useState(false)
   const [usandoGps, setUsandoGps] = useState(false)
   const [buscando, setBuscando] = useState(false)
@@ -73,15 +72,14 @@ export default function Inicio() {
     }
   }
 
-  async function buscarPorZona(e) {
-    e.preventDefault()
-    if (!zona.trim()) return
+  async function irAZona(valor) {
     setError('')
     setBuscandoZona(true)
     try {
-      elegirPunto(await buscarZona(zona.trim()))
-      setZona('')
+      elegirPunto(await buscarZona(valor))
+      setTexto('')
       if (!radio) cambiarRadio(3000)
+      setBuscando(false)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -143,7 +141,7 @@ export default function Inicio() {
         <button type="button" className="busqueda-boton" onClick={() => setBuscando(true)}>
           <Search size={20} />
           <span className="busqueda-boton-texto">
-            <b>{texto || 'Buscar comida o zona'}</b>
+            <b>{texto || 'Buscar comida, puesto o zona'}</b>
             <small>
               <MapPin size={13} />
               {lugar}
@@ -240,7 +238,7 @@ export default function Inicio() {
         <Modal titulo="Buscar" alCerrar={() => setBuscando(false)}>
           <form
             className="columna"
-            style={{ gap: 14 }}
+            style={{ gap: 10 }}
             onSubmit={(e) => {
               e.preventDefault()
               setBuscando(false)
@@ -251,29 +249,25 @@ export default function Inicio() {
               <input
                 className="buscador"
                 style={{ paddingLeft: 44 }}
-                placeholder="Salchipapa, pollo, anticuchos…"
+                placeholder="Comida, puesto o zona…"
                 value={texto}
                 onChange={(e) => setTexto(e.target.value)}
-                aria-label="Buscar comida o puesto"
+                aria-label="Buscar comida, puesto o zona"
                 autoFocus
               />
             </div>
-          </form>
-
-          <div className="columna" style={{ gap: 8 }}>
-            <span className="mini" style={{ fontWeight: 700 }}>Dónde</span>
+            {texto.trim() && (
+              <button type="button" className="boton secundario ancho" onClick={() => irAZona(texto.trim())} disabled={buscandoZona}>
+                {buscandoZona ? <Loader2 className="giro" size={20} /> : <MapPin size={20} />}
+                Ir a la zona “{texto.trim()}”
+              </button>
+            )}
             <button type="button" className="boton secundario ancho" onClick={usarGps} disabled={usandoGps}>
               {usandoGps ? <Loader2 className="giro" size={20} /> : <Crosshair size={20} />}
               {esGps ? 'Cerca de ti · actualizar' : 'Usar mi ubicación'}
             </button>
-            <form onSubmit={buscarPorZona} className="filtros-zona">
-              <input className="buscador" placeholder="Otra zona: Miraflores, Av. Grau…" value={zona} onChange={(e) => setZona(e.target.value)} aria-label="Buscar por zona" />
-              <button className="boton secundario" disabled={buscandoZona} aria-label="Buscar zona">
-                {buscandoZona ? <Loader2 className="giro" size={20} /> : <MapPin size={20} />}
-              </button>
-            </form>
             {!esGps && <span className="mini">Buscando cerca de: {punto.nombre}</span>}
-          </div>
+          </form>
 
           <div className="columna" style={{ gap: 8 }}>
             <span className="mini" style={{ fontWeight: 700 }}>Distancia</span>
@@ -300,7 +294,7 @@ export default function Inicio() {
 function TarjetaPuesto({ negocio: n, alElegir }) {
   return (
     <button className="tarjeta tocable fila" style={{ gap: 14 }} onClick={alElegir}>
-      <Foto src={n.imagen} tamano={60} texto={iniciales(n.nombre)} />
+      <Foto src={n.imagen || n.fotoDueno} tamano={60} texto={iniciales(n.nombre)} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <h3 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.nombre}</h3>
         <span className="sub" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

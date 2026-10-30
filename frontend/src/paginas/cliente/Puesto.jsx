@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Clock, MapPin, Navigation, Plus } from 'lucide-react'
+import { ArrowLeft, Clock, MapPin, Navigation, Plus, X } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { Foto } from '../../componentes/Foto'
@@ -31,6 +31,7 @@ export default function Puesto() {
   const [elegido, setElegido] = useState(null)
   const [cuantos, setCuantos] = useState(1)
   const [pendiente, setPendiente] = useState(null)
+  const [ver, setVer] = useState(null)
 
   useEffect(() => {
     Promise.all([api(`/negocios/${id}`), api(`/productos/negocio/${id}`)])
@@ -66,6 +67,8 @@ export default function Puesto() {
   if (!negocio) return <Cargando />
 
   const puedePedir = negocio.abierto
+  const fotoAvatar = urlImagen(negocio.fotoDueno || negocio.imagen)
+  const duena = negocio.propietario?.nombre
 
   return (
     <>
@@ -75,16 +78,24 @@ export default function Puesto() {
       </button>
 
       <section className="destacada columna" style={{ gap: 8 }}>
-        {negocio.imagen && <img className="portada" src={urlImagen(negocio.imagen)} alt="" />}
+        {negocio.imagen && (
+          <button type="button" className="portada-boton" onClick={() => setVer(urlImagen(negocio.imagen))} aria-label="Ver foto del puesto">
+            <img className="portada" src={urlImagen(negocio.imagen)} alt="" />
+          </button>
+        )}
         <div className="fila" style={{ gap: 14 }}>
-          {!negocio.imagen && (
-            <span className="inicial" style={{ background: 'rgba(255,255,255,.2)', color: 'inherit' }}>
-              {iniciales(negocio.nombre)}
-            </span>
-          )}
+          <button
+            type="button"
+            className={'avatar-puesto' + (fotoAvatar ? ' con-foto' : '')}
+            onClick={() => fotoAvatar && setVer(fotoAvatar)}
+            aria-label={fotoAvatar ? 'Ver foto' : negocio.nombre}
+          >
+            {fotoAvatar ? <img src={fotoAvatar} alt="" /> : iniciales(negocio.nombre)}
+          </button>
           <div style={{ minWidth: 0 }}>
             <h1>{negocio.nombre}</h1>
             <p style={{ opacity: 0.9 }}>{negocio.tipoComida}</p>
+            {duena && <p style={{ opacity: 0.85, fontSize: 14 }}>Te atiende {duena}</p>}
           </div>
         </div>
         {negocio.descripcion && <p style={{ opacity: 0.9 }}>{negocio.descripcion}</p>}
@@ -216,6 +227,14 @@ export default function Puesto() {
             </button>
           </div>
         </Modal>
+      )}
+      {ver && (
+        <div className="visor" role="dialog" aria-modal="true" aria-label="Foto" onClick={() => setVer(null)}>
+          <img src={ver} alt="" />
+          <button type="button" className="visor-cerrar" onClick={() => setVer(null)} aria-label="Cerrar">
+            <X size={24} />
+          </button>
+        </div>
       )}
     </>
   )
