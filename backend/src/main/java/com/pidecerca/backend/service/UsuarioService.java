@@ -148,6 +148,18 @@ public class UsuarioService {
         }
 
         usuario.setActivo(activo);
+
+        if (Rol.NEGOCIO.equals(usuario.getRol())) {
+            negocioRepository.findFirstByPropietarioId(usuario.getId()).ifPresent(negocio -> {
+                negocio.setActivo(activo);
+                if (!activo) {
+                    negocio.setAbierto(false);
+                    negocio.setUbicacionEnVivo(false);
+                }
+                negocioRepository.save(negocio);
+            });
+        }
+
         return usuarioRepository.save(usuario);
     }
 

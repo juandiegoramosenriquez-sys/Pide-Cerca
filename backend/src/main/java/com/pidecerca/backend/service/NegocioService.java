@@ -323,6 +323,7 @@ public class NegocioService {
         return negocioRepository.save(negocio);
     }
 
+    @Transactional
     public Negocio cambiarActivo(Long id, boolean activo) {
 
         Negocio negocio = obtenerPorId(id);
@@ -330,6 +331,13 @@ public class NegocioService {
 
         if (!activo) {
             negocio.setAbierto(false);
+            negocio.setUbicacionEnVivo(false);
+        }
+
+        Usuario propietario = negocio.getPropietario();
+        if (propietario != null && Rol.NEGOCIO.equals(propietario.getRol())) {
+            propietario.setActivo(activo);
+            usuarioRepository.save(propietario);
         }
 
         return negocioRepository.save(negocio);

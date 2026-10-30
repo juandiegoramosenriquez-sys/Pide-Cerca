@@ -6,7 +6,7 @@ import { useAviso } from '../../contexto/Aviso'
 import { useSesion } from '../../contexto/Sesion'
 import { Marco } from '../../componentes/Marco'
 import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
-import { fechaCorta, haceCuanto, soles } from '../../util/formato'
+import { cuando, haceCuanto, iniciales, soles } from '../../util/formato'
 
 export default function AdminArea() {
   const { usuario, salir } = useSesion()
@@ -124,40 +124,21 @@ export function Resumen() {
 
       <section className="columna">
         <h2>Últimos pedidos</h2>
-        <div className="tabla-caja">
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Puesto</th>
-                <th>Fecha</th>
-                <th>Total</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pedidos.map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    <b>#{p.id}</b>
-                  </td>
-                  <td>{p.negocio?.nombre}</td>
-                  <td>{fechaCorta(p.fecha)}</td>
-                  <td>{soles(p.total)}</td>
-                  <td>
-                    <Estado estado={p.estado} />
-                  </td>
-                </tr>
-              ))}
-              {pedidos.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="mini">
-                    Todavía no hay pedidos.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="filas">
+          {pedidos.map((p) => (
+            <div key={p.id} className="fila-item">
+              <span className="avatar">#{p.id}</span>
+              <div className="fila-item-texto">
+                <b>{p.negocio?.nombre}</b>
+                <span className="mini">{cuando(p.fecha)}</span>
+              </div>
+              <div className="fila-item-lado">
+                <b>{soles(p.total)}</b>
+                <Estado estado={p.estado} />
+              </div>
+            </div>
+          ))}
+          {pedidos.length === 0 && <p className="mini fila-item">Todavía no hay pedidos.</p>}
         </div>
       </section>
     </>
@@ -241,58 +222,43 @@ export function Puestos() {
 
       <section className="columna">
         <h2>Todos los puestos</h2>
-        <div className="tabla-caja">
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>Puesto</th>
-                <th>Dueño</th>
-                <th>Estado</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {resto.map((n) => {
-                const aprobado = n.estadoAprobacion === 'APROBADO'
-                return (
-                  <tr key={n.id}>
-                    <td>
-                      <b>{n.nombre}</b>
-                      <div className="mini">{n.tipoComida}</div>
-                    </td>
-                    <td>
-                      {n.propietarioNombre}
-                      <div className="mini">{n.propietarioCorreo}</div>
-                    </td>
-                    <td>
-                      {!aprobado ? (
-                        <span className="estado mal">Rechazado</span>
-                      ) : n.activo ? (
-                        <span className="estado ok">Activo</span>
-                      ) : (
-                        <span className="estado can">✕ Suspendido</span>
-                      )}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      {!aprobado ? (
-                        <button className="boton secundario chico" onClick={() => accion(api(`/admin/negocios/${n.id}/aprobar`, { metodo: 'POST' }), `${n.nombre} aprobado`)}>
-                          Aprobar
-                        </button>
-                      ) : n.activo ? (
-                        <button className="boton peligro chico" onClick={() => setSuspendiendo(n)}>
-                          Suspender
-                        </button>
-                      ) : (
-                        <button className="boton secundario chico" onClick={() => accion(api(`/negocios/${n.id}/habilitar`, { metodo: 'POST' }), `${n.nombre} reactivado`)}>
-                          Reactivar
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="filas">
+          {resto.map((n) => {
+            const aprobado = n.estadoAprobacion === 'APROBADO'
+            return (
+              <div key={n.id} className={'fila-item' + (aprobado && !n.activo ? ' apagado' : '')}>
+                <span className="avatar">{iniciales(n.nombre)}</span>
+                <div className="fila-item-texto">
+                  <b>{n.nombre}</b>
+                  <span className="mini">
+                    {n.propietarioNombre} · {n.propietarioCorreo}
+                  </span>
+                </div>
+                <div className="fila-item-lado">
+                  {!aprobado ? (
+                    <span className="estado mal">Rechazado</span>
+                  ) : n.activo ? (
+                    <span className="estado ok">Activo</span>
+                  ) : (
+                    <span className="estado can">Suspendido</span>
+                  )}
+                  {!aprobado ? (
+                    <button className="boton secundario chico" onClick={() => accion(api(`/admin/negocios/${n.id}/aprobar`, { metodo: 'POST' }), `${n.nombre} aprobado`)}>
+                      Aprobar
+                    </button>
+                  ) : n.activo ? (
+                    <button className="boton peligro chico" onClick={() => setSuspendiendo(n)}>
+                      Suspender
+                    </button>
+                  ) : (
+                    <button className="boton secundario chico" onClick={() => accion(api(`/negocios/${n.id}/habilitar`, { metodo: 'POST' }), `${n.nombre} reactivado`)}>
+                      Reactivar
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </section>
 
@@ -322,7 +288,7 @@ export function Puestos() {
 
       {suspendiendo && (
         <Modal titulo={`¿Suspender ${suspendiendo.nombre}?`} alCerrar={() => setSuspendiendo(null)}>
-          <p className="sub">Los clientes dejarán de verlo hasta que lo reactives.</p>
+          <p className="sub">Los clientes dejarán de verlo y la dueña no podrá entrar hasta que lo reactives.</p>
           <div className="dos">
             <button className="boton secundario" onClick={() => setSuspendiendo(null)}>
               Volver
@@ -369,7 +335,7 @@ export function Usuarios() {
   async function cambiarActivo(u) {
     try {
       await api(`/usuarios/${u.id}/activo`, { metodo: 'PUT', consulta: { valor: !u.activo } })
-      mostrar(u.activo ? `${u.nombre} suspendido` : `${u.nombre} reactivado`)
+      mostrar(u.activo ? `${u.nombre} suspendido${u.rol === 'NEGOCIO' ? ' junto con su puesto' : ''}` : `${u.nombre} reactivado`)
       cargar()
     } catch (e) {
       mostrar(e.message)
@@ -388,7 +354,7 @@ export function Usuarios() {
       <h1>Usuarios</h1>
       <div className="aviso info">Correos y teléfonos ocultos por privacidad.</div>
       <div className="fila envolver">
-        <input className="buscador" style={{ flex: 1, minWidth: 200 }} placeholder="Buscar por nombre" value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar usuario" />
+        <input className="buscador" style={{ flex: '1 1 180px', minWidth: 0 }} placeholder="Buscar por nombre" value={texto} onChange={(e) => setTexto(e.target.value)} aria-label="Buscar usuario" />
         <div className="chips">
           {[['', 'Todos'], ['CLIENTE', 'Clientes'], ['NEGOCIO', 'Negocios']].map(([v, t]) => (
             <button key={v} className={'chip' + (rol === v ? ' activo' : '')} onClick={() => setRol(v)}>
@@ -397,40 +363,27 @@ export function Usuarios() {
           ))}
         </div>
       </div>
-      <div className="tabla-caja">
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Correo</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th />
-            </tr>
-          </thead>
-          <tbody>
-            {visibles.map((u) => (
-              <tr key={u.id}>
-                <td>
-                  <b>
-                    {u.nombre} {u.apellido ? u.apellido.charAt(0) + '.' : ''}
-                  </b>
-                  <div className="mini">{u.telefono}</div>
-                </td>
-                <td>{u.correo}</td>
-                <td>{ROLES[u.rol] || u.rol}</td>
-                <td>{u.activo ? <span className="estado ok">Activo</span> : <span className="estado can">✕ Suspendido</span>}</td>
-                <td style={{ textAlign: 'right' }}>
-                  {u.id !== yo?.id && u.rol !== 'ADMIN' && (
-                    <button className={'boton chico ' + (u.activo ? 'peligro' : 'secundario')} onClick={() => cambiarActivo(u)}>
-                      {u.activo ? 'Suspender' : 'Reactivar'}
-                    </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="filas">
+        {visibles.map((u) => (
+          <div key={u.id} className={'fila-item' + (u.activo ? '' : ' apagado')}>
+            <span className="avatar">{iniciales(`${u.nombre || ''} ${u.apellido || ''}`)}</span>
+            <div className="fila-item-texto">
+              <b>
+                {u.nombre} {u.apellido ? u.apellido.charAt(0) + '.' : ''}
+              </b>
+              <span className="mini">{[ROLES[u.rol] || u.rol, u.correo, u.telefono].filter(Boolean).join(' · ')}</span>
+            </div>
+            <div className="fila-item-lado">
+              {u.activo ? <span className="estado ok">Activo</span> : <span className="estado can">Suspendido</span>}
+              {u.id !== yo?.id && u.rol !== 'ADMIN' && (
+                <button className={'boton chico ' + (u.activo ? 'peligro' : 'secundario')} onClick={() => cambiarActivo(u)}>
+                  {u.activo ? 'Suspender' : 'Reactivar'}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+        {visibles.length === 0 && <p className="mini fila-item">Nadie con ese nombre.</p>}
       </div>
     </>
   )
@@ -450,23 +403,17 @@ export function Registro() {
 
   return (
     <>
-      <div>
-        <h1>Registro de acciones</h1>
-      </div>
+      <h1>Registro de acciones</h1>
       {lista.length === 0 && <Vacio>Todavía no hay acciones registradas.</Vacio>}
-      <div className="tabla-caja">
-        <table className="tabla">
-          <tbody>
-            {lista.map((r) => (
-              <tr key={r.id}>
-                <td className="mini" style={{ whiteSpace: 'nowrap' }}>
-                  {fechaCorta(r.fecha)}
-                </td>
-                <td>{r.detalle}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="filas">
+        {lista.map((r) => (
+          <div key={r.id} className="fila-item">
+            <div className="fila-item-texto">
+              <span>{r.detalle}</span>
+              <span className="mini">{cuando(r.fecha)}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </>
   )

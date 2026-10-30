@@ -80,3 +80,14 @@ export function cuentaRegresiva(limite, ahora = Date.now()) {
   const segundos = Math.max(0, Math.ceil((new Date(limite).getTime() - ahora) / 1000))
   return { segundos, texto: `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}` }
 }
+
+export function cuando(valor, ahora = new Date()) {
+  if (!valor) return ''
+  const f = new Date(valor)
+  const hora = f.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
+  const dia = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const diferencia = Math.round((dia(ahora) - dia(f)) / 86400000)
+  if (diferencia === 0) return `Hoy · ${hora}`
+  if (diferencia === 1) return `Ayer · ${hora}`
+  return `${f.toLocaleDateString('es-PE', { day: 'numeric', month: 'short' }).replace('.', '')} · ${hora}`
+}
