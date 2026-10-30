@@ -1,4 +1,4 @@
-import { horarioError, horarioTexto } from '../util/formato'
+import { diasTexto, horaLarga, horarioError, horarioTexto } from '../util/formato'
 
 const DIAS = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 const NOMBRES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
@@ -54,24 +54,74 @@ export default function SelectorHorario({ valor, alCambiar }) {
           </button>
         ))}
       </div>
-      <div className="dos" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
-        <div className="campo">
-          <label htmlFor="h-abre">Abre</label>
-          <input id="h-abre" type="time" value={valor.horaApertura} onChange={(e) => e.target.value && cambiar({ horaApertura: e.target.value })} />
-        </div>
-        <div className="campo">
-          <label htmlFor="h-cierra">Cierra</label>
-          <input id="h-cierra" type="time" value={valor.horaCierre} onChange={(e) => e.target.value && cambiar({ horaCierre: e.target.value })} />
-        </div>
-      </div>
+      <SelectorHora etiqueta="Abre" valor={valor.horaApertura} alCambiar={(v) => cambiar({ horaApertura: v })} />
+      <SelectorHora etiqueta="Cierra" valor={valor.horaCierre} alCambiar={(v) => cambiar({ horaCierre: v })} />
       {horarioError(valor) ? (
         <div className="horario-resumen error">{horarioError(valor)}</div>
       ) : (
         <div className="horario-resumen">
-          {horarioTexto(valor)}
-          {valor.horaCierre < valor.horaApertura && <small>Cierras después de medianoche</small>}
+          {diasTexto(valor.diasAtencion)}
+          <small>
+            De {horaLarga(valor.horaApertura)} a {horaLarga(valor.horaCierre)}
+            {valor.horaCierre < valor.horaApertura ? ' del día siguiente' : ''}
+          </small>
         </div>
       )}
     </div>
   )
+}
+
+const HORAS = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+const MINUTOS = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55']
+
+function SelectorHora({ etiqueta, valor, alCambiar }) {
+  const [h24, minutos] = (valor || '00:00').split(':')
+  const hora = Number(h24) % 12 === 0 ? 12 : Number(h24) % 12
+  const periodo = Number(h24) < 12 ? 'am' : 'pm'
+  const opcionesMin = MINUTOS.includes(minutos) ? MINUTOS : [...MINUTOS, minutos].sort()
+  const armar = (h, m, p) => {
+    const base = h % 12
+    alCambiar(`${String(p === 'pm' ? base + 12 : base).padStart(2, '0')}:${m}`)
+  }
+  const id = 'hora-' + etiqueta
+
+  return (
+    <div className="campo">
+      <label htmlFor={id}>
+        {etiqueta} <span className="hora-momento">{momentoDelDia(valor)}</span>
+      </label>
+      <div className="hora-fila">
+        <select id={id} value={hora} onChange={(e) => armar(Number(e.target.value), minutos, periodo)} aria-label={`${etiqueta}: hora`}>
+          {HORAS.map((h) => (
+            <option key={h} value={h}>
+              {h}
+            </option>
+          ))}
+        </select>
+        <b>:</b>
+        <select value={minutos} onChange={(e) => armar(hora, e.target.value, periodo)} aria-label={`${etiqueta}: minutos`}>
+          {opcionesMin.map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+        <div className="segmento chico" role="group" aria-label={`${etiqueta}: am o pm`}>
+          {['am', 'pm'].map((p) => (
+            <button key={p} type="button" className={periodo === p ? 'activo' : ''} aria-pressed={periodo === p} onClick={() => armar(hora, minutos, p)}>
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function momentoDelDia(valor) {
+  const h = Number((valor || '0').split(':')[0])
+  if (h >= 5 && h < 12) return 'de la mañana'
+  if (h >= 12 && h < 19) return 'de la tarde'
+  if (h >= 19) return 'de la noche'
+  return 'de la madrugada'
 }

@@ -2105,3 +2105,41 @@ body {
   background: color-mix(in srgb, var(--mal) 12%, transparent);
   color: var(--mal);
 }
+
+.hora-fila {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hora-fila select {
+  width: 72px;
+  min-height: 52px;
+  padding: 0 10px;
+  border-radius: 14px;
+  border: 1px solid var(--borde);
+  background: var(--tarj);
+  color: var(--t1);
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.hora-fila b {
+  font-size: 20px;
+}
+
+.hora-fila .segmento {
+  flex: 1;
+}
+
+.hora-fila .segmento button {
+  min-height: 46px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.hora-momento {
+  font-weight: 600;
+  color: var(--acento);
+}

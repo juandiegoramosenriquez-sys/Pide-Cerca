@@ -125,3 +125,10 @@ export function horarioError(valor) {
   if (valor.horaApertura === valor.horaCierre) return 'La hora de cierre tiene que ser distinta a la de apertura'
   return ''
 }
+
+export function horaLarga(valor) {
+  if (!valor) return ''
+  const h = Number(valor.split(':')[0])
+  const momento = h >= 5 && h < 12 ? 'de la mañana' : h >= 12 && h < 19 ? 'de la tarde' : h >= 19 ? 'de la noche' : 'de la madrugada'
+  return `${hora12(valor).replace(/ (am|pm)$/, '')} ${momento}`
+}
