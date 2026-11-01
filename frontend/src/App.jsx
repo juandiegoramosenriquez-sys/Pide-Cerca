@@ -1,23 +1,32 @@
-import { useState } from 'react'
+import { lazy, useState } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { inicioDe, useSesion } from './contexto/Sesion'
 import { Cargando } from './componentes/Ui'
 import { BotonSalir, ClaveCuenta, DatosCuenta, PantallaCuenta } from './componentes/MiCuenta'
 import { iniciales } from './util/formato'
 import { Lock, Monitor, User } from 'lucide-react'
-import { Ingresar, RegistroCliente, RegistroNegocio } from './paginas/acceso/Acceso'
-import ClienteArea from './paginas/cliente/Cliente'
-import Inicio from './paginas/cliente/Inicio'
-import Puesto from './paginas/cliente/Puesto'
-import Carrito from './paginas/cliente/Carrito'
-import { MisPedidos, SeguimientoPedido } from './paginas/cliente/Pedidos'
-import Avisos from './paginas/cliente/Avisos'
-import NegocioArea from './paginas/negocio/Negocio'
-import PedidosNegocio from './paginas/negocio/Pedidos'
-import MenuNegocio from './paginas/negocio/Menu'
-import Ventas from './paginas/negocio/Ventas'
-import MiPuesto from './paginas/negocio/MiPuesto'
-import AdminArea, { FichaPuesto, Puestos, Registro, Resumen, Usuarios } from './paginas/admin/Admin'
+
+const Ingresar = lazy(() => import('./paginas/acceso/Acceso').then((m) => ({ default: m.Ingresar })))
+const RegistroCliente = lazy(() => import('./paginas/acceso/Acceso').then((m) => ({ default: m.RegistroCliente })))
+const RegistroNegocio = lazy(() => import('./paginas/acceso/Acceso').then((m) => ({ default: m.RegistroNegocio })))
+const ClienteArea = lazy(() => import('./paginas/cliente/Cliente'))
+const Inicio = lazy(() => import('./paginas/cliente/Inicio'))
+const Puesto = lazy(() => import('./paginas/cliente/Puesto'))
+const Carrito = lazy(() => import('./paginas/cliente/Carrito'))
+const MisPedidos = lazy(() => import('./paginas/cliente/Pedidos').then((m) => ({ default: m.MisPedidos })))
+const SeguimientoPedido = lazy(() => import('./paginas/cliente/Pedidos').then((m) => ({ default: m.SeguimientoPedido })))
+const Avisos = lazy(() => import('./paginas/cliente/Avisos'))
+const NegocioArea = lazy(() => import('./paginas/negocio/Negocio'))
+const PedidosNegocio = lazy(() => import('./paginas/negocio/Pedidos'))
+const MenuNegocio = lazy(() => import('./paginas/negocio/Menu'))
+const Ventas = lazy(() => import('./paginas/negocio/Ventas'))
+const MiPuesto = lazy(() => import('./paginas/negocio/MiPuesto'))
+const AdminArea = lazy(() => import('./paginas/admin/Admin'))
+const FichaPuesto = lazy(() => import('./paginas/admin/Admin').then((m) => ({ default: m.FichaPuesto })))
+const Puestos = lazy(() => import('./paginas/admin/Admin').then((m) => ({ default: m.Puestos })))
+const Registro = lazy(() => import('./paginas/admin/Admin').then((m) => ({ default: m.Registro })))
+const Resumen = lazy(() => import('./paginas/admin/Admin').then((m) => ({ default: m.Resumen })))
+const Usuarios = lazy(() => import('./paginas/admin/Admin').then((m) => ({ default: m.Usuarios })))
 
 function SoloInvitados() {
   const { usuario } = useSesion()

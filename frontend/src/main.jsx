@@ -1,7 +1,8 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import { Cargando } from './componentes/Ui'
 import { AvisoProveedor } from './contexto/Aviso'
 import { SesionProveedor } from './contexto/Sesion'
 import { TemaProveedor } from './contexto/Tema'
@@ -13,7 +14,9 @@ createRoot(document.getElementById('root')).render(
       <TemaProveedor>
         <AvisoProveedor>
           <SesionProveedor>
-            <App />
+            <Suspense fallback={<Cargando />}>
+              <App />
+            </Suspense>
           </SesionProveedor>
         </AvisoProveedor>
       </TemaProveedor>
