@@ -18,7 +18,8 @@ function leer() {
 
 function leerEstilo() {
   try {
-    return localStorage.getItem('pidecerca_estilo') || 'moderno'
+    const guardado = localStorage.getItem('pidecerca_estilo')
+    return guardado === 'mercado' ? 'mercado' : 'moderno'
   } catch {
     return 'moderno'
   }

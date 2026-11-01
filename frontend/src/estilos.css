@@ -5,10 +5,10 @@
   --neon: #FF9F1C;
   --cont: #FFEDD5;
   --cont-t: #7C2D12;
-  --fondo: #FFF8F1;
-  --tarj: #FFFFFF;
-  --tarj-2: #F4F1EE;
-  --t1: #0F172A;
+  --fondo: #F1EADF;
+  --tarj: #FAF6EF;
+  --tarj-2: #E8E0D3;
+  --t1: #1E2430;
   --t2: #475569;
   --t3: #64748B;
   --borde: rgba(148, 163, 184, 0.45);
@@ -44,8 +44,9 @@
   --neon: #FF5A5F;
   --cont: #FEE2E2;
   --cont-t: #7F1D1D;
-  --fondo: #FFF7F7;
-  --tarj-2: #F6EFEF;
+  --fondo: #F2E8E6;
+  --tarj: #FAF5F3;
+  --tarj-2: #E9DEDB;
 }
 
 :root[data-rol='admin'] {
@@ -54,8 +55,9 @@
   --neon: #475569;
   --cont: #E5E7EB;
   --cont-t: #111827;
-  --fondo: #F6F7F9;
-  --tarj-2: #EEF0F3;
+  --fondo: #E8EAED;
+  --tarj: #F6F7F8;
+  --tarj-2: #DDE0E4;
 }
 
 :root[data-tema='oscuro'] {
@@ -71,50 +73,50 @@
   --destacada-t: var(--t1);
   --brillo: 0 0 18px color-mix(in srgb, var(--neon) 30%, transparent);
   --rec: #FFD98A;
-  --rec-bg: #2A1E05;
+  --rec-bg: #4A3A14;
   --rec-solido: #FFC233;
   --pro: #A9CCFF;
-  --pro-bg: #0A1A33;
+  --pro-bg: #1F3556;
   --pro-solido: #4DA3FF;
   --ok: #9BF0C2;
-  --ok-bg: #0A2817;
+  --ok-bg: #1B4430;
   --ok-solido: #2EE58A;
   --ent: #CBD5E1;
-  --ent-bg: #1A1F26;
+  --ent-bg: #3F454E;
   --mal: #FFB8C2;
-  --mal-bg: #330A10;
+  --mal-bg: #55252C;
   --sombra: 0 10px 30px rgba(0, 0, 0, 0.5);
   color-scheme: dark;
 }
 
 :root[data-tema='oscuro'] {
-  --osc: #0B0806;
+  --osc: #1A1D20;
   --neon: #FF8A3D;
-  --cont: #3D1E0A;
+  --cont: #4A3426;
   --cont-t: #FFD3B0;
-  --fondo: #0B0806;
-  --tarj: #1F1610;
-  --tarj-2: #2A1E16;
+  --fondo: #1A1D20;
+  --tarj: #23262A;
+  --tarj-2: #2C3034;
   --sobre-acento: #1A0A02;
 }
 
 :root[data-tema='oscuro'][data-rol='negocio'] {
-  --neon: #FF4D6D;
-  --cont: #3F0D14;
+  --neon: #FF5C7A;
+  --cont: #4A2A30;
   --cont-t: #FFC2CC;
-  --fondo: #0B0606;
-  --tarj: #211213;
-  --tarj-2: #2D1819;
+  --fondo: #1A1D20;
+  --tarj: #23262A;
+  --tarj-2: #2C3034;
   --sobre-acento: #200308;
 }
 
 :root[data-tema='oscuro'][data-rol='admin'] {
   --neon: #E5E7EB;
-  --cont: #2A2D34;
+  --cont: #3A3F47;
   --cont-t: #F3F4F6;
-  --fondo: #08090B;
-  --tarj: #16181D;
-  --tarj-2: #1F2228;
+  --fondo: #1A1D20;
+  --tarj: #23262A;
+  --tarj-2: #2C3034;
   --sobre-acento: #0B0C0E;
 }
 
@@ -1126,7 +1128,7 @@ p {
   height: 110px;
 }
 
-.barras div {
+.barras button {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1134,6 +1136,45 @@ p {
   gap: 4px;
   height: 100%;
   justify-content: flex-end;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.barras button.elegida span {
+  color: var(--t1);
+}
+
+.barras button.elegida i {
+  outline: 2px solid var(--t1);
+  outline-offset: 2px;
+}
+
+.dia-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--borde);
+  padding-top: 10px;
+}
+
+.dia-fila {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--tarj-2);
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--t1);
+  text-align: left;
+}
+
+button.dia-fila:not(:disabled) {
+  cursor: pointer;
 }
 
 .barras i {
@@ -2247,8 +2288,8 @@ body {
 }
 
 :root[data-estilo='mercado']:not([data-tema='oscuro']) {
-  --fondo: #F6F2EA;
-  --tarj-2: #EDE7DC;
+  --fondo: #EEE7D9;
+  --tarj-2: #E2DACA;
   --barra: var(--pri);
   --destacada: var(--pri);
 }
@@ -2385,4 +2426,56 @@ body {
 [data-estilo='mercado'] .metricas > *,
 [data-estilo='mercado'] .contadores > * {
   animation-duration: 0.2s;
+}
+
+.fila-item-enlace {
+  flex: 1 1 220px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.fila-item-flecha {
+  flex-shrink: 0;
+  color: var(--t3);
+}
+
+.ficha-dato {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.ficha-dato + .ficha-dato {
+  border-top: 1px solid color-mix(in srgb, var(--t3) 20%, transparent);
+}
+
+.ficha-dato span {
+  color: var(--t2);
+  flex-shrink: 0;
+}
+
+.ficha-dato b {
+  min-width: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.tarjeta .metricas {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tarjeta .metrica {
+  padding: 10px;
+}
+
+.tarjeta .metrica b {
+  font-size: 18px;
+  overflow-wrap: anywhere;
 }
