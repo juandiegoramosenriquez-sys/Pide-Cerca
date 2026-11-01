@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../api'
+import BarrasSemana from '../../componentes/BarrasSemana'
 import { Cargando, Error, Estado } from '../../componentes/Ui'
 import { fechaCorta, nombreCorto, soles } from '../../util/formato'
-
-const DIAS = ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá']
 
 function inicioDia(fecha) {
   return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()).getTime()
@@ -25,17 +24,6 @@ export default function Ventas() {
     const entregados = pedidos.filter((p) => p.estado === 'RECOGIDO')
     const deHoy = pedidos.filter((p) => new Date(p.fecha).getTime() >= hoy)
     const ventasHoy = deHoy.filter((p) => p.estado === 'RECOGIDO').reduce((s, p) => s + p.total, 0)
-    const semana = Array.from({ length: 7 }, (_, i) => {
-      const dia = hoy - (6 - i) * 86400000
-      const total = entregados
-        .filter((p) => {
-          const t = new Date(p.fecha).getTime()
-          return t >= dia && t < dia + 86400000
-        })
-        .reduce((s, p) => s + p.total, 0)
-      return { etiqueta: DIAS[new Date(dia).getDay()], total, hoy: i === 6 }
-    })
-    const maximo = Math.max(1, ...semana.map((d) => d.total))
     const conteo = {}
     entregados.forEach((p) =>
       p.detalles?.forEach((d) => {
@@ -50,8 +38,7 @@ export default function Ventas() {
       ventasHoy,
       pedidosHoy: deHoy.filter((p) => p.estado === 'RECOGIDO').length,
       canceladosHoy: deHoy.filter((p) => p.estado === 'CANCELADO').length,
-      semana,
-      maximo,
+      entregados,
       top,
       ultimos: pedidos.filter((p) => ['RECOGIDO', 'CANCELADO'].includes(p.estado)).slice(0, 15)
     }
@@ -72,14 +59,7 @@ export default function Ventas() {
 
       <section className="tarjeta columna">
         <h2>Últimos 7 días</h2>
-        <div className="barras" role="img" aria-label="Ventas de los últimos 7 días">
-          {datos.semana.map((d, i) => (
-            <div key={i} title={soles(d.total)}>
-              <i className={d.hoy ? 'hoy' : ''} style={{ height: `${Math.max(4, (d.total / datos.maximo) * 100)}%` }} />
-              <span>{d.etiqueta}</span>
-            </div>
-          ))}
-        </div>
+        <BarrasSemana pedidos={datos.entregados} verbo="Vendiste" nombreDe={(p) => nombreCorto(p.usuario)} />
       </section>
 
       {datos.top.length > 0 && (

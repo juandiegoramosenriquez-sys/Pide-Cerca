@@ -4,17 +4,18 @@ import { ArrowLeft, Trash2 } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { BotonCarga, Error, Vacio } from '../../componentes/Ui'
-import { METODOS, soles } from '../../util/formato'
+import { METODOS, distancia, soles } from '../../util/formato'
+import { AVISO_METROS, LIMITE_METROS, aPie, metrosAlPuesto, puntoGuardado } from '../../util/ubicacion'
 import { useCliente } from './Cliente'
 
-function usePuestoAbierto(id) {
-  const [abierto, setAbierto] = useState(true)
+function usePuesto(id) {
+  const [datos, setDatos] = useState({ abierto: true, negocio: null })
   useEffect(() => {
     if (!id) return
     let vigente = true
     const revisar = () =>
       api(`/negocios/${id}`)
-        .then((n) => vigente && setAbierto(Boolean(n.abierto)))
+        .then((n) => vigente && setDatos({ abierto: Boolean(n.abierto), negocio: n }))
         .catch(() => null)
     revisar()
     const intervalo = setInterval(revisar, 10000)
@@ -23,7 +24,20 @@ function usePuestoAbierto(id) {
       clearInterval(intervalo)
     }
   }, [id])
-  return abierto
+  return datos
+}
+
+function AvisoLejos({ metros, muyLejos }) {
+  return (
+    <div className={'aviso columna ' + (muyLejos ? 'error' : 'alerta')} style={{ gap: 2, alignItems: 'flex-start' }}>
+      <b>{muyLejos ? 'Este puesto está muy lejos' : `Este puesto está a ${distancia(metros)}`}</b>
+      <span>
+        {muyLejos
+          ? `Está a ${distancia(metros)}, unos ${aPie(metros)} a pie. Pide en un puesto a menos de ${distancia(LIMITE_METROS)}.`
+          : `Son unos ${aPie(metros)} a pie. Revisa que te quede bien antes de pagar.`}
+      </span>
+    </div>
+  )
 }
 
 function AvisoCerrado() {
@@ -50,7 +64,11 @@ export default function Carrito() {
   const [metodo, setMetodo] = useState('YAPE')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const abierto = usePuestoAbierto(carrito.negocio?.id)
+  const { abierto, negocio: puesto } = usePuesto(carrito.negocio?.id)
+  const metros = metrosAlPuesto(puesto || carrito.negocio)
+  const muyLejos = metros !== null && metros > LIMITE_METROS
+  const lejos = metros !== null && metros > AVISO_METROS && !muyLejos
+  const puedePagar = abierto && !muyLejos
 
   if (!carrito.items.length) {
     return (
@@ -72,6 +90,8 @@ export default function Carrito() {
         metodo: 'POST',
         cuerpo: {
           negocioId: carrito.negocio.id,
+          latitud: puntoGuardado()?.lat,
+          longitud: puntoGuardado()?.lng,
           metodoPago: metodo,
           notas: carrito.notas,
           items: carrito.items.map((i) => ({ productoId: i.producto.id, cantidad: i.cantidad }))
@@ -145,8 +165,10 @@ export default function Carrito() {
         </div>
         <div className="aviso info">Pago de prueba: no se cobra dinero real.</div>
         {resumen}
-        {abierto ? <Error>{error}</Error> : <AvisoCerrado />}
-        {abierto ? (
+        {!abierto && <AvisoCerrado />}
+        {abierto && muyLejos && <AvisoLejos metros={metros} muyLejos />}
+        {puedePagar && <Error>{error}</Error>}
+        {puedePagar ? (
           <BotonCarga cargando={enviando} onClick={pagar}>
             Pagar {soles(total)}
           </BotonCarga>
@@ -189,10 +211,18 @@ export default function Carrito() {
       </div>
       {resumen}
       {!abierto && <AvisoCerrado />}
-      {abierto ? (
-        <button className="boton principal ancho" onClick={() => setPaso('pago')}>
-          Continuar al pago · {soles(total)}
-        </button>
+      {abierto && (muyLejos || lejos) && <AvisoLejos metros={metros} muyLejos={muyLejos} />}
+      {puedePagar ? (
+        <>
+          <button className="boton principal ancho" onClick={() => setPaso('pago')}>
+            Continuar al pago · {soles(total)}
+          </button>
+          {lejos && (
+            <button className="boton secundario ancho" onClick={() => navegar('/')}>
+              Buscar uno más cerca
+            </button>
+          )}
+        </>
       ) : (
         <button className="boton principal ancho" onClick={() => navegar('/')}>
           Ver otros puestos

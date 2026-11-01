@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Check } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
+import BarrasSemana from '../../componentes/BarrasSemana'
 import Cuenta from '../../componentes/Cuenta'
 import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
 import { METODOS, esActivo, fechaCorta, minutosRestantes, soles } from '../../util/formato'
@@ -200,6 +201,20 @@ export function MisPedidos() {
           {activos.map((p) => (
             <Tarjeta key={p.id} p={p} />
           ))}
+        </section>
+      )}
+      {anteriores.length > 0 && (
+        <section className="tarjeta columna">
+          <div className="fila entre">
+            <h2>Tus gastos</h2>
+            <span className="mini">Últimos 7 días</span>
+          </div>
+          <BarrasSemana
+            pedidos={pedidos.filter((p) => p.estado === 'RECOGIDO')}
+            verbo="Gastaste"
+            nombreDe={(p) => p.negocio?.nombre}
+            alAbrir={(p) => navegar(`/pedido/${p.id}`)}
+          />
         </section>
       )}
       {anteriores.length > 0 && (

@@ -7,16 +7,9 @@ import { Foto } from '../../componentes/Foto'
 import Mapa, { enlaceComoLlegar } from '../../componentes/Mapa'
 import { urlImagen } from '../../util/imagen'
 import { Cargando, Error, Modal } from '../../componentes/Ui'
-import { haceCuanto, horarioTexto, iniciales, soles } from '../../util/formato'
+import { distancia, haceCuanto, horarioTexto, iniciales, soles } from '../../util/formato'
 
-function puntoGuardado() {
-  try {
-    const p = JSON.parse(localStorage.getItem('pidecerca_punto'))
-    return p && p.nombre === 'Mi ubicación' ? p : null
-  } catch {
-    return null
-  }
-}
+import { LIMITE_METROS, aPie, metrosAlPuesto, puntoGuardado } from '../../util/ubicacion'
 import { useCliente } from './Cliente'
 
 export default function Puesto() {
@@ -66,7 +59,9 @@ export default function Puesto() {
   if (error && !negocio) return <Error>{error}</Error>
   if (!negocio) return <Cargando />
 
-  const puedePedir = negocio.abierto
+  const metros = metrosAlPuesto(negocio)
+  const muyLejos = metros !== null && metros > LIMITE_METROS
+  const puedePedir = negocio.abierto && !muyLejos
   const fotoAvatar = urlImagen(negocio.imagen)
   const duena = negocio.propietario?.nombre
 
@@ -121,7 +116,12 @@ export default function Puesto() {
         </div>
       </section>
 
-      {!puedePedir && <div className="aviso alerta">Cerrado ahora. No recibe pedidos.</div>}
+      {!negocio.abierto && <div className="aviso alerta">Cerrado ahora. No recibe pedidos.</div>}
+      {negocio.abierto && muyLejos && (
+        <div className="aviso alerta">
+          Muy lejos para pedir: está a {distancia(metros)}, unos {aPie(metros)} a pie. Puedes ver el menú, pero pide en un puesto a menos de {distancia(LIMITE_METROS)}.
+        </div>
+      )}
 
       {negocio.latitud != null && negocio.longitud != null && (
         <section className="tarjeta columna" style={{ gap: 10, padding: 12 }}>
@@ -207,7 +207,7 @@ export default function Puesto() {
               setElegido(null)
             }}
           >
-            {elegido.disponible && puedePedir ? `Agregar · ${soles(elegido.precio * cuantos)}` : 'No disponible ahora'}
+            {elegido.disponible && puedePedir ? `Agregar · ${soles(elegido.precio * cuantos)}` : muyLejos ? 'Muy lejos para pedir' : 'No disponible ahora'}
           </button>
         </Modal>
       )}

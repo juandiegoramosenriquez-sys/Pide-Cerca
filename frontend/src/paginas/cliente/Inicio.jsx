@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Crosshair, List, Loader2, Map as IconoMapa, MapPin, Search, X } from 'lucide-react'
 import { api } from '../../api'
@@ -6,6 +6,7 @@ import { Foto } from '../../componentes/Foto'
 import Mapa, { buscarZona, pedirGps } from '../../componentes/Mapa'
 import { Cargando, Error, Modal, Vacio } from '../../componentes/Ui'
 import { distancia, iniciales } from '../../util/formato'
+import { LIMITE_METROS } from '../../util/ubicacion'
 
 const CENTRO_LIMA = { lat: -12.0464, lng: -77.0428, nombre: 'Centro de Lima' }
 
@@ -37,7 +38,6 @@ export default function Inicio() {
   const [negocios, setNegocios] = useState(null)
   const [error, setError] = useState('')
   const [texto, setTexto] = useState('')
-  const [tipo, setTipo] = useState('')
   const [punto, setPunto] = useState(() => leerPreferencia('pidecerca_punto', CENTRO_LIMA))
   const [radio, setRadio] = useState(() => leerPreferencia('pidecerca_radio', 0))
   const [vista, setVista] = useState(() => leerPreferencia('pidecerca_vista', 'lista'))
@@ -124,8 +124,7 @@ export default function Inicio() {
     return () => clearInterval(intervalo)
   }, [texto, punto, radio])
 
-  const tipos = useMemo(() => [...new Set((negocios || []).map((n) => n.tipoComida).filter(Boolean))], [negocios])
-  const visibles = (negocios || []).filter((n) => !tipo || n.tipoComida === tipo).sort((a, b) => Number(Boolean(b.abierto)) - Number(Boolean(a.abierto)))
+  const visibles = [...(negocios || [])].sort((a, b) => Number(Boolean(b.abierto)) - Number(Boolean(a.abierto)))
   const esGps = punto.nombre === 'Mi ubicación'
   const abiertos = visibles.filter((n) => n.abierto)
   const cerrados = visibles.filter((n) => !n.abierto)
@@ -163,19 +162,6 @@ export default function Inicio() {
         </button>
       </div>
 
-      {tipos.length > 1 && (
-        <div className="chips">
-          <button className={'chip' + (!tipo ? ' activo' : '')} onClick={() => setTipo('')}>
-            Todo
-          </button>
-          {tipos.map((t) => (
-            <button key={t} className={'chip' + (tipo === t ? ' activo' : '')} onClick={() => setTipo(tipo === t ? '' : t)}>
-              {t}
-            </button>
-          ))}
-        </div>
-      )}
-
       <Error>{error}</Error>
 
       {negocios === null ? (
@@ -207,7 +193,7 @@ export default function Inicio() {
           ) : (
             <div className={'lista' + (grupo === 'cerrados' ? ' cerrados' : '')}>
               {lista.map((n) => (
-                <TarjetaPuesto key={n.id} negocio={n} alElegir={() => navegar(`/puesto/${n.id}`)} />
+                <TarjetaPuesto key={n.id} negocio={n} lejos={esGps && n.distanciaMetros > LIMITE_METROS} alElegir={() => navegar(`/puesto/${n.id}`)} />
               ))}
             </div>
           )}
@@ -271,7 +257,7 @@ export default function Inicio() {
   )
 }
 
-function TarjetaPuesto({ negocio: n, alElegir }) {
+function TarjetaPuesto({ negocio: n, alElegir, lejos }) {
   return (
     <button className="tarjeta tocable fila" style={{ gap: 14 }} onClick={alElegir}>
       <Foto src={n.imagen} tamano={60} texto={iniciales(n.nombre)} />
@@ -290,7 +276,12 @@ function TarjetaPuesto({ negocio: n, alElegir }) {
           )
         )}
       </span>
-      {distancia(n.distanciaMetros) && <span className="precio">{distancia(n.distanciaMetros)}</span>}
+      {distancia(n.distanciaMetros) && (
+        <span className="precio columna" style={{ gap: 0, alignItems: 'flex-end' }}>
+          {distancia(n.distanciaMetros)}
+          {lejos && <small className="mini">Muy lejos</small>}
+        </span>
+      )}
     </button>
   )
 }
