@@ -75,7 +75,7 @@ function AvisoPrivacidad({ acepto, alCambiar }) {
 }
 
 export function Ingresar() {
-  useRolVisual('cliente')
+  useRolVisual('neutro')
   const { ingresar } = useSesion()
   const navegar = useNavigate()
   const [correo, setCorreo] = useState('')
