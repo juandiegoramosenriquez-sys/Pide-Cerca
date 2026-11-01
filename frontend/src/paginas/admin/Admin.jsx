@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
-import { Check, History, LayoutDashboard, LogOut, Settings, Store, Users, X } from 'lucide-react'
+import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { ArrowLeft, Check, ChevronRight, History, LayoutDashboard, LogOut, Settings, Store, Users, X } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { useSesion } from '../../contexto/Sesion'
 import { Marco } from '../../componentes/Marco'
+import Mapa from '../../componentes/Mapa'
 import { PantallaCuenta } from '../../componentes/MiCuenta'
 import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
-import { cuando, haceCuanto, iniciales, soles } from '../../util/formato'
+import { cuando, duracion, fechaCompleta, haceCuanto, horarioTexto, iniciales, soles } from '../../util/formato'
 
 export default function AdminArea() {
   const { usuario, salir } = useSesion()
@@ -243,6 +244,9 @@ export function Puestos() {
               Dueño: {n.propietarioNombre} · {n.propietarioCorreo} · {n.propietarioTelefono} · se registró {haceCuanto(n.fechaSolicitud)}
             </p>
             <div className="fila envolver">
+              <Link className="boton secundario chico" to={`/admin/puestos/${n.id}`}>
+                Ver ficha
+              </Link>
               <button className="boton listo chico" onClick={() => accion(api(`/admin/negocios/${n.id}/aprobar`, { metodo: 'POST' }), `${n.nombre} aprobado`)}>
                 <Check size={18} />
                 Aprobar
@@ -269,13 +273,16 @@ export function Puestos() {
             const aprobado = n.estadoAprobacion === 'APROBADO'
             return (
               <div key={n.id} className={'fila-item' + (aprobado && !n.activo ? ' apagado' : '')}>
-                <span className="avatar">{iniciales(n.nombre)}</span>
-                <div className="fila-item-texto">
-                  <b>{n.nombre}</b>
-                  <span className="mini">
-                    {n.propietarioNombre} · {n.propietarioCorreo}
-                  </span>
-                </div>
+                <Link to={`/admin/puestos/${n.id}`} className="fila-item-enlace">
+                  <span className="avatar">{iniciales(n.nombre)}</span>
+                  <div className="fila-item-texto">
+                    <b>{n.nombre}</b>
+                    <span className="mini">
+                      {n.propietarioNombre} · {n.propietarioCorreo}
+                    </span>
+                  </div>
+                  <ChevronRight size={18} className="fila-item-flecha" />
+                </Link>
                 <div className="fila-item-lado">
                   {!aprobado ? (
                     <span className="estado mal">Rechazado</span>
@@ -348,6 +355,100 @@ export function Puestos() {
           </div>
         </Modal>
       )}
+    </>
+  )
+}
+
+function Dato({ etiqueta, children }) {
+  return (
+    <div className="ficha-dato">
+      <span>{etiqueta}</span>
+      <b>{children}</b>
+    </div>
+  )
+}
+
+const ESTADO_FICHA = {
+  PENDIENTE: { texto: 'Por aprobar', clase: 'rec' },
+  RECHAZADO: { texto: 'Rechazado', clase: 'mal' }
+}
+
+export function FichaPuesto() {
+  const { id } = useParams()
+  const navegar = useNavigate()
+  const [ficha, setFicha] = useState(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    api(`/admin/negocios/${id}/ficha`)
+      .then(setFicha)
+      .catch((e) => setError(e.message))
+  }, [id])
+
+  if (!ficha) return error ? <Error>{error}</Error> : <Cargando />
+
+  const aprobado = ficha.estadoAprobacion === 'APROBADO'
+  const estado = ESTADO_FICHA[ficha.estadoAprobacion] || (ficha.activo ? { texto: 'Activo', clase: 'ok' } : { texto: 'Suspendido', clase: 'can' })
+  const conMapa = ficha.latitud != null && ficha.longitud != null
+
+  return (
+    <>
+      <button className="boton secundario chico" style={{ alignSelf: 'flex-start' }} onClick={() => navegar('/admin/puestos')}>
+        <ArrowLeft size={18} />
+        Puestos
+      </button>
+
+      <section className="perfil-cabecera cliente">
+        <div className="perfil-cabecera-texto">
+          <span className="avatar">{iniciales(ficha.nombre)}</span>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h1>{ficha.nombre}</h1>
+            <span style={{ opacity: 0.9 }}>{[ficha.tipoComida, ficha.direccion].filter(Boolean).join(' · ')}</span>
+          </div>
+          <span className={'estado ' + estado.clase}>{estado.texto}</span>
+        </div>
+      </section>
+
+      <section className="tarjeta columna">
+        <h2>Inscripción</h2>
+        <div>
+          <Dato etiqueta="Se registró">{fechaCompleta(ficha.fechaSolicitud) || 'Sin dato'}</Dato>
+          {ficha.estadoAprobacion === 'PENDIENTE' && <Dato etiqueta="Aprobado">Pendiente</Dato>}
+          {aprobado && <Dato etiqueta="Aprobado">{fechaCompleta(ficha.fechaAprobacion) || 'Sin dato'}</Dato>}
+          {aprobado && <Dato etiqueta="Tiempo de revisión">{duracion(ficha.fechaSolicitud, ficha.fechaAprobacion) || 'Sin dato'}</Dato>}
+          {ficha.estadoAprobacion === 'RECHAZADO' && <Dato etiqueta="Motivo del rechazo">{ficha.motivoRechazo}</Dato>}
+          <Dato etiqueta="Aceptó privacidad">{fechaCompleta(ficha.fechaPrivacidad) || 'Sin dato'}</Dato>
+        </div>
+      </section>
+
+      <section className="tarjeta columna">
+        <h2>Dueño y puesto</h2>
+        <div>
+          <Dato etiqueta="Dueño">{ficha.propietarioNombre || 'Sin dato'}</Dato>
+          <Dato etiqueta="Contacto">{[ficha.propietarioCorreo, ficha.propietarioTelefono].filter(Boolean).join(' · ') || 'Sin dato'}</Dato>
+          <Dato etiqueta="Horario">{horarioTexto(ficha) || 'Sin dato'}</Dato>
+        </div>
+        {conMapa ? <Mapa puestos={[ficha]} alto={180} /> : <p className="mini">Sin ubicación marcada.</p>}
+      </section>
+
+      <section className="tarjeta columna">
+        <h2>Actividad</h2>
+        <div className="metricas">
+          <div className="metrica">
+            <span>Pedidos</span>
+            <b>{ficha.pedidos}</b>
+          </div>
+          <div className="metrica">
+            <span>Ventas</span>
+            <b>{soles(ficha.ventas)}</b>
+          </div>
+          <div className="metrica">
+            <span>Sin responder</span>
+            <b>{ficha.sinResponder}</b>
+          </div>
+        </div>
+        <Dato etiqueta="Última conexión">{ficha.ultimaConexion ? cuando(ficha.ultimaConexion) : 'Sin dato'}</Dato>
+      </section>
     </>
   )
 }

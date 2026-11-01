@@ -132,3 +132,21 @@ export function horaLarga(valor) {
   const momento = h >= 5 && h < 12 ? 'de la mañana' : h >= 12 && h < 19 ? 'de la tarde' : h >= 19 ? 'de la noche' : 'de la madrugada'
   return `${hora12(valor).replace(/ (am|pm)$/, '')} ${momento}`
 }
+
+export function fechaCompleta(valor) {
+  if (!valor) return ''
+  const f = new Date(valor)
+  const fecha = f.toLocaleDateString('es-PE', { day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '')
+  const hora = f.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
+  return `${fecha} · ${hora}`
+}
+
+export function duracion(desde, hasta) {
+  if (!desde || !hasta) return ''
+  const minutos = Math.max(0, Math.round((new Date(hasta).getTime() - new Date(desde).getTime()) / 60000))
+  if (minutos < 60) return `${minutos} min`
+  const horas = Math.floor(minutos / 60)
+  if (horas < 24) return minutos % 60 ? `${horas} h ${minutos % 60} min` : `${horas} h`
+  const dias = Math.floor(horas / 24)
+  return dias === 1 ? '1 día' : `${dias} días`
+}

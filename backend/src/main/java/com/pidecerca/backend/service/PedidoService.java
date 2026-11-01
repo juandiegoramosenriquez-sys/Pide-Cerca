@@ -22,6 +22,8 @@ import java.util.Set;
 @Service
 public class PedidoService {
 
+    private static final double LIMITE_DISTANCIA_METROS = 5000;
+
     private static final Set<String> METODOS_PAGO = Set.of("YAPE", "PLIN", "TARJETA", "EFECTIVO");
 
     private static final Set<EstadoPedido> ESTADOS_ACTIVOS = EnumSet.of(
@@ -123,6 +125,13 @@ public class PedidoService {
 
         if (!Boolean.TRUE.equals(negocio.getAbierto())) {
             throw ApiException.solicitudInvalida("Este puesto cerró. No se te cobró nada");
+        }
+
+        if (request.latitud() != null && request.longitud() != null
+                && negocio.getLatitud() != null && negocio.getLongitud() != null
+                && NegocioService.distanciaMetros(request.latitud(), request.longitud(),
+                        negocio.getLatitud(), negocio.getLongitud()) > LIMITE_DISTANCIA_METROS) {
+            throw ApiException.solicitudInvalida("Este puesto está muy lejos de ti. Pide en uno a menos de 5 km");
         }
 
         String metodo = request.metodoPago() == null
@@ -402,7 +411,7 @@ public class PedidoService {
 
         for (Pedido pedido : pedidoRepository.findByEstadoAndFechaBefore(EstadoPedido.PENDIENTE, limite)) {
 
-            cancelarConReembolso(pedido, "El puesto no respondió a tiempo");
+            cancelarConReembolso(pedido, Limites.MOTIVO_SIN_RESPUESTA);
             Pedido guardado = pedidoRepository.save(pedido);
 
             notificarCliente(guardado, "El puesto no respondió",

@@ -62,6 +62,9 @@ public class Negocio {
     private LocalDateTime fechaCambioNombre;
 
     @JsonIgnore
+    private LocalDateTime fechaAprobacion;
+
+    @JsonIgnore
     private LocalDateTime ultimaConexion;
 
     @JsonIgnore
@@ -254,6 +257,14 @@ public class Negocio {
 
     public void setUbicacionActualizada(LocalDateTime ubicacionActualizada) {
         this.ubicacionActualizada = ubicacionActualizada;
+    }
+
+    public LocalDateTime getFechaAprobacion() {
+        return fechaAprobacion;
+    }
+
+    public void setFechaAprobacion(LocalDateTime fechaAprobacion) {
+        this.fechaAprobacion = fechaAprobacion;
     }
 
     public LocalDateTime getUltimaConexion() {

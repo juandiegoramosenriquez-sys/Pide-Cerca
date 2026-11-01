@@ -2,9 +2,12 @@ package com.pidecerca.backend.service;
 
 import com.pidecerca.backend.dto.CrearNegocioRequest;
 import com.pidecerca.backend.dto.RegistroNegocioRequest;
+import com.pidecerca.backend.dto.FichaNegocioResponse;
 import com.pidecerca.backend.entity.EstadoAprobacion;
+import com.pidecerca.backend.entity.EstadoPedido;
 import com.pidecerca.backend.entity.Limites;
 import com.pidecerca.backend.entity.Negocio;
+import com.pidecerca.backend.entity.Pedido;
 import com.pidecerca.backend.entity.Rol;
 import com.pidecerca.backend.entity.Usuario;
 import com.pidecerca.backend.exception.ApiException;
@@ -177,10 +180,28 @@ public class NegocioService {
         }
 
         negocio.setEstadoAprobacion(EstadoAprobacion.APROBADO);
+        negocio.setFechaAprobacion(LocalDateTime.now());
         negocio.setMotivoRechazo(null);
         negocio.setActivo(true);
 
         return negocioRepository.save(negocio);
+    }
+
+    public FichaNegocioResponse ficha(Long id) {
+
+        Negocio negocio = obtenerPorId(id);
+        List<Pedido> pedidos = pedidoRepository.findByNegocioIdOrderByFechaDesc(id);
+
+        double ventas = pedidos.stream()
+                .filter(p -> p.getEstado() != EstadoPedido.CANCELADO && p.getTotal() != null)
+                .mapToDouble(Pedido::getTotal)
+                .sum();
+
+        long sinResponder = pedidos.stream()
+                .filter(p -> Limites.MOTIVO_SIN_RESPUESTA.equals(p.getMotivoCancelacion()))
+                .count();
+
+        return FichaNegocioResponse.de(negocio, pedidos.size(), ventas, sinResponder);
     }
 
     public Negocio rechazar(Long id, String motivo) {

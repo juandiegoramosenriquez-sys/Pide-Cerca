@@ -1,5 +1,6 @@
 package com.pidecerca.backend.controller;
 
+import com.pidecerca.backend.dto.FichaNegocioResponse;
 import com.pidecerca.backend.dto.MotivoRequest;
 import com.pidecerca.backend.dto.SolicitudNegocioResponse;
 import com.pidecerca.backend.entity.Negocio;
@@ -47,6 +48,14 @@ public class AdminController {
     @GetMapping("/negocios")
     public List<SolicitudNegocioResponse> negocios() {
         return negocioService.listarTodos().stream().map(SolicitudNegocioResponse::de).toList();
+    }
+
+    @GetMapping("/negocios/{id}/ficha")
+    public FichaNegocioResponse ficha(@PathVariable Long id) {
+        FichaNegocioResponse ficha = negocioService.ficha(id);
+        registroAccionService.registrar(usuarioActualService.obtener(), "VER_FICHA_NEGOCIO",
+                "Viste la ficha del puesto " + ficha.nombre());
+        return ficha;
     }
 
     @PostMapping("/negocios/{id}/aprobar")

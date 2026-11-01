@@ -17,7 +17,7 @@ import PedidosNegocio from './paginas/negocio/Pedidos'
 import MenuNegocio from './paginas/negocio/Menu'
 import Ventas from './paginas/negocio/Ventas'
 import MiPuesto from './paginas/negocio/MiPuesto'
-import AdminArea, { Puestos, Registro, Resumen, Usuarios } from './paginas/admin/Admin'
+import AdminArea, { FichaPuesto, Puestos, Registro, Resumen, Usuarios } from './paginas/admin/Admin'
 
 function SoloInvitados() {
   const { usuario } = useSesion()
@@ -87,6 +87,7 @@ export default function App() {
         <Route path="/admin" element={<AdminArea />}>
           <Route index element={<Resumen />} />
           <Route path="puestos" element={<Puestos />} />
+          <Route path="puestos/:id" element={<FichaPuesto />} />
           <Route path="usuarios" element={<Usuarios />} />
           <Route path="registro" element={<Registro />} />
         </Route>

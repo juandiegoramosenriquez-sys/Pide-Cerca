@@ -14,6 +14,8 @@ public final class Limites {
 
     public static final int PEDIDOS_SIN_RESPUESTA = 2;
 
+    public static final String MOTIVO_SIN_RESPUESTA = "El puesto no respondió a tiempo";
+
     private static final DateTimeFormatter FORMATO =
             DateTimeFormatter.ofPattern("d 'de' MMMM", Locale.forLanguageTag("es-PE"));
 
