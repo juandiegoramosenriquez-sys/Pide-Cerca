@@ -1,5 +1,5 @@
 :root {
-  --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --fuente: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --osc: #7C2D12;
   --pri: #EA580C;
   --neon: #FF9F1C;
@@ -2010,18 +2010,6 @@ body {
   max-width: 100%;
 }
 
-@media (max-width: 560px) {
-  .mapa {
-    width: 100vw;
-    max-width: none;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    border-radius: 0;
-    border-left: 0;
-    border-right: 0;
-  }
-}
-
 .portada-boton {
   display: block;
   padding: 0;
@@ -2478,4 +2466,208 @@ body {
 .tarjeta .metrica b {
   font-size: 18px;
   overflow-wrap: anywhere;
+}
+
+:root:not([data-estilo='mercado']) {
+  --radio: 12px;
+  --brillo: none;
+}
+
+:root:not([data-estilo='mercado']):not([data-tema='oscuro']) {
+  --osc: #2F5F45;
+  --pri: #3F7E5B;
+  --neon: #4F8F6B;
+  --acento: var(--pri);
+  --cont: #DDEBE2;
+  --cont-t: #2F5F45;
+  --fondo: #F3F6F2;
+  --tarj: #FBFDFB;
+  --tarj-2: #E8EEE8;
+  --t1: #1F2A24;
+  --t2: #4A5750;
+  --t3: #66726B;
+  --borde: #DCE5DE;
+  --sobre-acento: #FFFFFF;
+  --barra: var(--tarj);
+  --barra-t: var(--t1);
+  --barra-linea: var(--borde);
+  --destacada: var(--pri);
+  --destacada-t: #FFFFFF;
+  --sombra: 0 1px 2px rgba(31, 42, 36, 0.06);
+}
+
+:root:not([data-estilo='mercado']):not([data-tema='oscuro'])[data-rol='negocio'] {
+  --osc: #7D2434;
+  --pri: #A8344A;
+  --neon: #A8344A;
+  --cont: #F5DDE0;
+  --cont-t: #7D2434;
+  --fondo: #FAF3F3;
+  --tarj: #FFFCFC;
+  --tarj-2: #F0E4E5;
+  --t1: #2B2223;
+  --t2: #5C4F50;
+  --t3: #7A6C6D;
+  --borde: #EBDADB;
+  --sombra: 0 1px 2px rgba(43, 34, 35, 0.06);
+}
+
+:root:not([data-estilo='mercado']):not([data-tema='oscuro'])[data-rol='admin'] {
+  --osc: #111827;
+  --pri: #374151;
+  --neon: #4B5563;
+  --cont: #E5E7EB;
+  --cont-t: #111827;
+  --fondo: #F3F4F6;
+  --tarj: #FCFCFD;
+  --tarj-2: #E9EBEE;
+  --t1: #1F2328;
+  --t2: #4B525B;
+  --t3: #6B727C;
+  --borde: #E1E4E8;
+  --sombra: 0 1px 2px rgba(31, 35, 40, 0.06);
+}
+
+:root:not([data-estilo='mercado'])[data-tema='oscuro'] {
+  --neon: #6FBF92;
+  --acento: var(--neon);
+  --cont: #2B4538;
+  --cont-t: #C4E6D2;
+  --borde: rgba(255, 255, 255, 0.1);
+  --sobre-acento: #0E1A13;
+  --barra: var(--tarj);
+  --barra-t: var(--t1);
+  --barra-linea: var(--borde);
+  --destacada: var(--tarj);
+  --destacada-t: var(--t1);
+  --sombra: none;
+}
+
+:root:not([data-estilo='mercado'])[data-tema='oscuro'][data-rol='negocio'] {
+  --neon: #E0707F;
+  --cont: #4A2A30;
+  --cont-t: #FFC2CC;
+  --sobre-acento: #2A0A10;
+}
+
+:root:not([data-estilo='mercado'])[data-tema='oscuro'][data-rol='admin'] {
+  --neon: #D1D5DB;
+  --cont: #3A3F47;
+  --cont-t: #F3F4F6;
+  --sobre-acento: #0B0C0E;
+}
+
+:root:not([data-estilo='mercado']) :is(h1, h2, .barra-titulo) {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+:root:not([data-estilo='mercado']) h3 {
+  font-weight: 600;
+}
+
+:root:not([data-estilo='mercado']) :is(.numero, .numero-grande) {
+  font-weight: 500;
+}
+
+:root:not([data-estilo='mercado']) .numero {
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+}
+
+:root:not([data-estilo='mercado']) :is(.boton, .chip, .estado, .nav-item, .tab-arriba, .campo label, .barra-boton, .precio) {
+  font-weight: 600;
+}
+
+:root:not([data-estilo='mercado']) .boton {
+  border-radius: 10px;
+  min-height: 48px;
+}
+
+:root:not([data-estilo='mercado']) .boton.chico {
+  min-height: 40px;
+  border-radius: 8px;
+}
+
+:root:not([data-estilo='mercado']) .boton.principal {
+  box-shadow: none;
+}
+
+:root:not([data-estilo='mercado']) :is(.boton-icono, .barra-boton, .nav-item, .selector) {
+  border-radius: 10px;
+}
+
+:root:not([data-estilo='mercado']) .tarjeta {
+  border-radius: 12px;
+}
+
+:root:not([data-estilo='mercado']) .destacada {
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+:root:not([data-estilo='mercado']) :is(.campo input, .campo select, .campo textarea, .buscador) {
+  border-radius: 10px;
+  min-height: 48px;
+}
+
+:root:not([data-estilo='mercado']):not([data-tema='oscuro']) .barra-boton {
+  background: var(--tarj-2);
+  border: 1px solid var(--borde);
+}
+
+:root:not([data-estilo='mercado']):not([data-tema='oscuro']) .tab-arriba.activa {
+  background: var(--cont);
+  color: var(--cont-t);
+}
+
+:root:not([data-estilo='mercado']) .barra-sub {
+  opacity: 1;
+  color: var(--t2);
+}
+
+.acceso-caja .centrado {
+  text-align: center;
+}
+
+.separador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--t3);
+  font-size: 13px;
+}
+
+.separador::before,
+.separador::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--borde);
+}
+
+.boton-google {
+  gap: 10px;
+}
+
+.boton-google .marca-g {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  background: var(--tarj);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4285F4;
+}
+
+.acceso-pie {
+  border-top: 1px solid var(--borde);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }

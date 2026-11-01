@@ -8,6 +8,12 @@ const COLOR_BARRA = {
   admin: { claro: '#1F2937', oscuro: '#08090B' }
 }
 
+const COLOR_BARRA_SUAVE = {
+  cliente: { claro: '#FBFDFB', oscuro: '#23262A' },
+  negocio: { claro: '#FFFCFC', oscuro: '#23262A' },
+  admin: { claro: '#FCFCFD', oscuro: '#23262A' }
+}
+
 function leer() {
   try {
     return localStorage.getItem('pidecerca_modo') || 'auto'
@@ -50,7 +56,7 @@ export function TemaProveedor({ children }) {
     raiz.dataset.rol = rol
     raiz.dataset.estilo = estilo
     const meta = document.querySelector('meta[name="theme-color"]')
-    if (meta) meta.setAttribute('content', COLOR_BARRA[rol][real])
+    if (meta) meta.setAttribute('content', (estilo === 'mercado' ? COLOR_BARRA : COLOR_BARRA_SUAVE)[rol][real])
   }, [real, rol, estilo])
 
   function cambiarModo(nuevo) {

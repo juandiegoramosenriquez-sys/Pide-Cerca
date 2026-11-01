@@ -23,6 +23,19 @@ function Cabecera() {
   )
 }
 
+function BotonGoogle() {
+  const [aviso, setAviso] = useState(false)
+  return (
+    <div className="columna" style={{ gap: 8 }}>
+      <button type="button" className="boton secundario ancho boton-google" onClick={() => setAviso(true)}>
+        <span className="marca-g" aria-hidden="true">G</span>
+        Registrarme con Google
+      </button>
+      {aviso && <div className="aviso info">Muy pronto podrás registrarte con Google. Por ahora usa tu correo.</div>}
+    </div>
+  )
+}
+
 function CampoClave({ id, valor, alCambiar, etiqueta = 'Contraseña', nueva = false }) {
   const [ver, setVer] = useState(false)
   return (
@@ -89,7 +102,7 @@ export function Ingresar() {
     <div className="acceso">
       <div className="acceso-caja">
         <Cabecera />
-        <div>
+        <div className="centrado">
           <h1>Pide antes, recoge sin esperar</h1>
           <p className="sub">Comida cerca de ti, sin colas.</p>
         </div>
@@ -102,10 +115,13 @@ export function Ingresar() {
           <CampoClave id="clave" valor={password} alCambiar={setPassword} />
           <BotonCarga cargando={enviando}>Entrar</BotonCarga>
         </form>
-        <div className="columna" style={{ gap: 8, textAlign: 'center' }}>
-          <p className="sub">
-            ¿No tienes cuenta? <Link to="/registro">Regístrate gratis</Link>
-          </p>
+        <p className="sub centrado">
+          ¿No tienes cuenta? <Link to="/registro">Regístrate gratis</Link>
+        </p>
+        <div className="separador">o</div>
+        <BotonGoogle />
+        <div className="acceso-pie">
+          <p className="sub centrado">¿Vendes comida?</p>
           <Link to="/registro-negocio" className="boton secundario">
             <Store size={20} />
             Tengo un puesto de comida
@@ -151,7 +167,7 @@ export function RegistroCliente() {
     <div className="acceso">
       <div className="acceso-caja">
         <Cabecera />
-        <div>
+        <div className="centrado">
           <h1>Crea tu cuenta</h1>
           <p className="sub">Gratis, en un minuto.</p>
         </div>
@@ -179,7 +195,9 @@ export function RegistroCliente() {
           <AvisoPrivacidad acepto={acepto} alCambiar={setAcepto} />
           <BotonCarga cargando={enviando}>Crear mi cuenta</BotonCarga>
         </form>
-        <p className="sub" style={{ textAlign: 'center' }}>
+        <div className="separador">o</div>
+        <BotonGoogle />
+        <p className="sub centrado">
           ¿Ya tienes cuenta? <Link to="/ingresar">Inicia sesión</Link>
         </p>
       </div>
@@ -224,7 +242,7 @@ export function RegistroNegocio() {
     <div className="acceso">
       <div className="acceso-caja">
         <Cabecera />
-        <div>
+        <div className="centrado">
           <h1>Registra tu puesto</h1>
           <p className="sub">Recibe pedidos desde tu celular.</p>
         </div>
