@@ -3,6 +3,7 @@ package com.pidecerca.backend.repository;
 import com.pidecerca.backend.entity.Reclamo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReclamoRepository extends JpaRepository<Reclamo, Long> {
@@ -12,4 +13,6 @@ public interface ReclamoRepository extends JpaRepository<Reclamo, Long> {
     List<Reclamo> findByUsuarioIdOrderByFechaDesc(Long usuarioId);
 
     long countByEstado(String estado);
+
+    long countByUsuarioIdAndFechaAfter(Long usuarioId, LocalDateTime desde);
 }

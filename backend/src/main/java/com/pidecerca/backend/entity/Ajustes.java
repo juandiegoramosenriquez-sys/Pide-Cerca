@@ -25,6 +25,8 @@ public class Ajustes {
 
     private Integer minutosBloqueoLogin = 10;
 
+    private Integer reclamosPorDia = 1;
+
     public Long getId() {
         return id;
     }
@@ -83,5 +85,13 @@ public class Ajustes {
 
     public void setMinutosBloqueoLogin(Integer minutosBloqueoLogin) {
         this.minutosBloqueoLogin = minutosBloqueoLogin;
+    }
+
+    public Integer getReclamosPorDia() {
+        return reclamosPorDia == null ? 1 : reclamosPorDia;
+    }
+
+    public void setReclamosPorDia(Integer valor) {
+        this.reclamosPorDia = valor;
     }
 }

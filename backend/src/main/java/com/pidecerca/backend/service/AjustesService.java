@@ -35,6 +35,8 @@ public class AjustesService {
         ajustes.setIntentosLoginMaximos(rango(cambios.intentosLoginMaximos(), 3, 20, "Los intentos de ingreso", ajustes.getIntentosLoginMaximos()));
         ajustes.setMinutosBloqueoLogin(rango(cambios.minutosBloqueoLogin(), 1, 120, "Los minutos de bloqueo", ajustes.getMinutosBloqueoLogin()));
 
+        ajustes.setReclamosPorDia(rango(cambios.reclamosPorDia(), 1, 10, "Los reclamos por día", ajustes.getReclamosPorDia()));
+
         return ajustesRepository.save(ajustes);
     }
 

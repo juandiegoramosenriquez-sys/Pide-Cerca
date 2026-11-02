@@ -4,7 +4,9 @@ import com.pidecerca.backend.entity.EstadoAprobacion;
 import com.pidecerca.backend.entity.EstadoPedido;
 import com.pidecerca.backend.entity.Rol;
 import com.pidecerca.backend.repository.NegocioRepository;
+import com.pidecerca.backend.entity.Reclamo;
 import com.pidecerca.backend.repository.PedidoRepository;
+import com.pidecerca.backend.repository.ReclamoRepository;
 import com.pidecerca.backend.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 
@@ -19,12 +21,15 @@ public class ResumenService {
     private final UsuarioRepository usuarioRepository;
     private final NegocioRepository negocioRepository;
     private final PedidoRepository pedidoRepository;
+    private final ReclamoRepository reclamoRepository;
 
     public ResumenService(
             UsuarioRepository usuarioRepository,
             NegocioRepository negocioRepository,
-            PedidoRepository pedidoRepository) {
+            PedidoRepository pedidoRepository,
+            ReclamoRepository reclamoRepository) {
 
+        this.reclamoRepository = reclamoRepository;
         this.usuarioRepository = usuarioRepository;
         this.negocioRepository = negocioRepository;
         this.pedidoRepository = pedidoRepository;
@@ -42,6 +47,7 @@ public class ResumenService {
         resumen.put("totalNegocios", negocioRepository.count());
         resumen.put("negociosActivos", negocioRepository.countByActivoTrueAndEstadoAprobacion(EstadoAprobacion.APROBADO));
         resumen.put("solicitudesPendientes", negocioRepository.countByEstadoAprobacion(EstadoAprobacion.PENDIENTE));
+        resumen.put("reclamosAbiertos", reclamoRepository.countByEstado(Reclamo.ABIERTO));
         resumen.put("totalPedidos", pedidoRepository.count());
         resumen.put("pedidosHoy", pedidoRepository.countByFechaAfter(inicioDelDia));
         resumen.put("ventasHoy", pedidoRepository.sumarVentasDesde(inicioDelDia));
