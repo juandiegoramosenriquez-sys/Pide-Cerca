@@ -37,6 +37,11 @@ public class AjustesService {
 
         ajustes.setReclamosPorDia(rango(cambios.reclamosPorDia(), 1, 10, "Los reclamos por día", ajustes.getReclamosPorDia()));
 
+        ajustes.setMinutosParaPagar(rango(cambios.minutosParaPagar(), 3, 60, "Los minutos para pagar", ajustes.getMinutosParaPagar()));
+        ajustes.setFaltaPorNoPagar(rango(cambios.faltaPorNoPagar(), 0, 1, "Las faltas por no pagar", ajustes.getFaltaPorNoPagar()));
+
+        ajustes.setMinutosRevisionPago(rango(cambios.minutosRevisionPago(), 5, 240, "Los minutos para revisar un pago", ajustes.getMinutosRevisionPago()));
+
         return ajustesRepository.save(ajustes);
     }
 

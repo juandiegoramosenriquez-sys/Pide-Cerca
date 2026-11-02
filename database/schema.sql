@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS negocio (
     ubicacion_actualizada DATETIME(6),
     usuario_id BIGINT,
     apertura_automatica BOOLEAN,
+    nombre_cobro VARCHAR(255),
+    acepta_efectivo BOOLEAN,
+    cobros_verificados BOOLEAN,
     abierto_por_horario BOOLEAN,
     cerrado_manual_fecha DATE,
     CONSTRAINT fk_negocio_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id)
@@ -87,6 +90,10 @@ CREATE TABLE IF NOT EXISTS pedido (
     fecha_listo DATETIME(6),
     fecha_recogido DATETIME(6),
     limite_recoger DATETIME(6),
+    limite_pago DATETIME(6),
+    fecha_aviso_pago DATETIME(6),
+    referencia_pago VARCHAR(20),
+    fecha_pago_observado DATETIME(6),
     notas VARCHAR(255),
     codigo VARCHAR(4),
     motivo_cancelacion VARCHAR(255),
@@ -155,7 +162,10 @@ CREATE TABLE IF NOT EXISTS ajustes (
     max_por_pedido INT,
     intentos_login_maximos INT,
     minutos_bloqueo_login INT,
-    reclamos_por_dia INT
+    reclamos_por_dia INT,
+    minutos_para_pagar INT,
+    falta_por_no_pagar INT,
+    minutos_revision_pago INT
 ) ENGINE = InnoDB;
 
 CREATE TABLE IF NOT EXISTS reclamo (
@@ -208,4 +218,12 @@ CREATE TABLE IF NOT EXISTS calificacion (
     fecha DATETIME(6),
     CONSTRAINT fk_calificacion_usuario FOREIGN KEY (usuario_id) REFERENCES usuario (id),
     CONSTRAINT fk_calificacion_negocio FOREIGN KEY (negocio_id) REFERENCES negocio (id)
+) ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS metodo_cobro (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    negocio_id BIGINT,
+    codigo VARCHAR(255),
+    numero VARCHAR(255),
+    CONSTRAINT fk_metodo_cobro_negocio FOREIGN KEY (negocio_id) REFERENCES negocio (id)
 ) ENGINE = InnoDB;

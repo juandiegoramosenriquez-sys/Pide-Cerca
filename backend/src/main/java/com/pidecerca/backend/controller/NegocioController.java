@@ -1,6 +1,7 @@
 package com.pidecerca.backend.controller;
 
 import com.pidecerca.backend.dto.CrearNegocioRequest;
+import com.pidecerca.backend.dto.CobrosRequest;
 import com.pidecerca.backend.dto.UbicacionRequest;
 import com.pidecerca.backend.entity.Negocio;
 import com.pidecerca.backend.service.NegocioService;
@@ -73,6 +74,16 @@ public class NegocioController {
     public Negocio actualizarUbicacion(@RequestBody UbicacionRequest request) {
         return negocioService.actualizarUbicacion(
                 usuarioActualService.obtener(), request.latitud(), request.longitud(), request.enVivo());
+    }
+
+    @GetMapping("/mio/cobros")
+    public CobrosRequest misCobros() {
+        return negocioService.obtenerCobros(usuarioActualService.obtener());
+    }
+
+    @PutMapping("/mio/cobros")
+    public CobrosRequest guardarCobros(@RequestBody CobrosRequest request) {
+        return negocioService.guardarCobros(usuarioActualService.obtener(), request);
     }
 
     @PutMapping("/mio/automatico")

@@ -33,7 +33,7 @@ public class ControlAdminService {
     public record FilaRanking(Long id, String nombre, double ventas, int pedidos, int cancelados, int noRecogidos) {
     }
 
-    public record FilaCliente(Long id, String nombre, String correo, boolean activo, int faltas, int pedidos, int cancelados, int noRecogidos) {
+    public record FilaCliente(Long id, String nombre, String correo, boolean activo, int faltas, int pedidos, int cancelados, int noRecogidos, int disputas) {
     }
 
     public record Problema(Long id, String nombre, String detalle) {
@@ -129,6 +129,13 @@ public class ControlAdminService {
                     if (sinResponder > 0) {
                         detalles.add(sinResponder + " pedidos seguidos sin responder");
                     }
+                    long sinConfirmar = recientes.stream()
+                            .filter(p -> delNegocio(p, negocio)
+                                    && Limites.MOTIVO_PAGO_NO_CONFIRMADO.equals(p.getMotivoCancelacion()))
+                            .count();
+                    if (sinConfirmar > 0) {
+                        detalles.add(sinConfirmar + " pagos sin confirmar en 7 días");
+                    }
                     if (porFalta > 0) {
                         detalles.add(porFalta + " cancelados por no responder en 7 días");
                     }
@@ -171,7 +178,8 @@ public class ControlAdminService {
                             usuario.getFaltas(),
                             suyos.size(),
                             (int) suyos.stream().filter(p -> p.getEstado() == EstadoPedido.CANCELADO).count(),
-                            (int) suyos.stream().filter(p -> p.getEstado() == EstadoPedido.NO_RECOGIDO).count());
+                            (int) suyos.stream().filter(p -> p.getEstado() == EstadoPedido.NO_RECOGIDO).count(),
+                            (int) suyos.stream().filter(p -> Limites.MOTIVO_PAGO_NO_CONFIRMADO.equals(p.getMotivoCancelacion())).count());
                 })
                 .sorted(Comparator.comparingInt(FilaCliente::faltas).thenComparingInt(FilaCliente::cancelados).reversed())
                 .toList();

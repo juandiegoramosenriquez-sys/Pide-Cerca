@@ -6,6 +6,7 @@ import com.pidecerca.backend.entity.*;
 import com.pidecerca.backend.exception.ApiException;
 import com.pidecerca.backend.repository.NegocioRepository;
 import com.pidecerca.backend.repository.PagoRepository;
+import com.pidecerca.backend.repository.ReclamoRepository;
 import com.pidecerca.backend.repository.PedidoRepository;
 import com.pidecerca.backend.repository.ProductoRepository;
 import com.pidecerca.backend.repository.UsuarioRepository;
@@ -24,10 +25,15 @@ import java.util.Set;
 public class PedidoService {
 
 
-    private static final Set<String> METODOS_PAGO = Set.of("YAPE", "PLIN", "TARJETA", "EFECTIVO");
+    private static final Set<String> METODOS_PAGO = new java.util.HashSet<>(List.of("EFECTIVO"));
+
+    static {
+        METODOS_PAGO.addAll(MetodosDigitales.NOMBRES.keySet());
+    }
 
     private static final Set<EstadoPedido> ESTADOS_ACTIVOS = EnumSet.of(
             EstadoPedido.PENDIENTE,
+            EstadoPedido.ESPERANDO_PAGO,
             EstadoPedido.ACEPTADO,
             EstadoPedido.EN_PREPARACION,
             EstadoPedido.LISTO_PARA_RECOGER
@@ -42,6 +48,7 @@ public class PedidoService {
     private final UsuarioActualService usuarioActualService;
     private final UsuarioRepository usuarioRepository;
     private final AjustesService ajustesService;
+    private final ReclamoRepository reclamoRepository;
 
     public PedidoService(
             PedidoRepository pedidoRepository,
@@ -52,8 +59,10 @@ public class PedidoService {
             NotificacionService notificacionService,
             UsuarioActualService usuarioActualService,
             UsuarioRepository usuarioRepository,
-            AjustesService ajustesService) {
+            AjustesService ajustesService,
+            ReclamoRepository reclamoRepository) {
 
+        this.reclamoRepository = reclamoRepository;
         this.usuarioRepository = usuarioRepository;
         this.ajustesService = ajustesService;
         this.pedidoRepository = pedidoRepository;
@@ -112,7 +121,8 @@ public class PedidoService {
     }
 
     private static String textoDevolucion(Pedido pedido, boolean yaDevuelto) {
-        if (pedido.getPago() != null && "EFECTIVO".equals(pedido.getPago().getMetodo())) {
+        if (pedido.getPago() == null || "EFECTIVO".equals(pedido.getPago().getMetodo())
+                || pedido.getPago().getEstado() != EstadoPago.PAGADO) {
             return "No se te cobró nada";
         }
         return yaDevuelto ? "Te devolvimos tu dinero" : "Te devolveremos tu dinero";
@@ -156,6 +166,13 @@ public class PedidoService {
 
         if (!METODOS_PAGO.contains(metodo)) {
             throw ApiException.solicitudInvalida("Método de pago no válido");
+        }
+
+        boolean recibe = "EFECTIVO".equals(metodo) ? negocio.getAceptaEfectivo() : negocio.aceptaMetodo(metodo);
+
+        if (!recibe) {
+            throw ApiException.solicitudInvalida("Este puesto no recibe pagos con "
+                    + ("EFECTIVO".equals(metodo) ? "efectivo" : MetodosDigitales.nombre(metodo)));
         }
 
         if ("EFECTIVO".equals(metodo) && cliente.getFaltas() >= ajustes.getFaltasBloqueanEfectivo()) {
@@ -226,7 +243,7 @@ public class PedidoService {
         pago.setMonto(guardado.getTotal());
         pago.setMetodo(metodo);
         pago.setFecha(LocalDateTime.now());
-        pago.setEstado(EstadoPago.PAGADO);
+        pago.setEstado("EFECTIVO".equals(metodo) ? EstadoPago.PAGADO : EstadoPago.PENDIENTE);
         guardado.setPago(pagoRepository.save(pago));
 
         notificacionService.crear(
@@ -255,8 +272,8 @@ public class PedidoService {
 
         Pago pago = pagoRepository.findByPedidoId(id).orElse(null);
 
-        if (pago == null || pago.getEstado() != EstadoPago.PAGADO) {
-            throw ApiException.solicitudInvalida("El pedido no está pagado");
+        if (pago == null) {
+            throw ApiException.solicitudInvalida("El pedido no tiene un pago registrado");
         }
 
         if (minutos != null) {
@@ -268,18 +285,191 @@ public class PedidoService {
             pedido.setTiempoPreparacion(15);
         }
 
-        pedido.setEstado(EstadoPedido.ACEPTADO);
-        pedido.setFechaAceptado(LocalDateTime.now());
+        boolean porPagar = pago.getEstado() == EstadoPago.PENDIENTE;
+
+        if (porPagar) {
+            pedido.setEstado(EstadoPedido.ESPERANDO_PAGO);
+            pedido.setLimitePago(LocalDateTime.now().plusMinutes(ajustesService.obtener().getMinutosParaPagar()));
+        } else {
+            pedido.setEstado(EstadoPedido.ACEPTADO);
+            pedido.setFechaAceptado(LocalDateTime.now());
+        }
+
         pedido.getNegocio().setPedidosSinResponder(0);
         negocioRepository.save(pedido.getNegocio());
 
         Pedido guardado = pedidoRepository.save(pedido);
 
-        notificarCliente(guardado, "Pedido aceptado",
-                "Tu pedido #" + guardado.getId() + " fue aceptado. Estará listo en unos "
+        if (porPagar) {
+            notificarCliente(guardado, "Paga tu pedido",
+                    "Tu pedido #" + guardado.getId() + " fue aceptado. Paga S/ " + String.format("%.2f", guardado.getTotal())
+                            + " por " + MetodosDigitales.nombre(pago.getMetodo()) + " en los próximos "
+                            + ajustesService.obtener().getMinutosParaPagar() + " minutos para que lo preparen");
+        } else {
+            notificarCliente(guardado, "Pedido aceptado",
+                    "Tu pedido #" + guardado.getId() + " fue aceptado. Estará listo en unos "
+                            + guardado.getTiempoPreparacion() + " minutos");
+        }
+
+        return guardado;
+    }
+
+    @Transactional
+    public Pedido avisarPago(Usuario cliente, Long id, String referencia) {
+
+        Pedido pedido = buscar(id);
+
+        if (pedido.getUsuario() == null || !pedido.getUsuario().getId().equals(cliente.getId())) {
+            throw ApiException.prohibido("Este pedido no es tuyo");
+        }
+
+        validarEstado(pedido, EstadoPedido.ESPERANDO_PAGO, "Este pedido no está esperando tu pago");
+
+        if (pedido.getFechaAvisoPago() != null) {
+            throw ApiException.conflicto("Ya avisaste que pagaste. Espera a que el puesto lo confirme");
+        }
+
+        String codigo = AuthService.texto(referencia);
+
+        if (codigo == null || !codigo.matches("[A-Za-z0-9-]{4,20}")) {
+            throw ApiException.solicitudInvalida(
+                    "Escribe el número de operación que te muestra tu billetera, de 4 a 20 letras o números");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        pedido.setReferenciaPago(codigo);
+        pedido.setFechaAvisoPago(ahora);
+        pedido.setLimitePago(ahora.plusMinutes(ajustesService.obtener().getMinutosRevisionPago()));
+
+        Pedido guardado = pedidoRepository.save(pedido);
+
+        notificacionService.crear(
+                guardado.getNegocio().getPropietario(),
+                guardado,
+                "Revisa tu pago",
+                guardado.getUsuario().getNombre() + " dice que pagó S/ " + String.format("%.2f", guardado.getTotal())
+                        + " por el pedido #" + guardado.getId() + ". Número de operación: " + codigo + ". Revísalo en tu "
+                        + MetodosDigitales.nombre(guardado.getPago().getMetodo()));
+
+        return guardado;
+    }
+
+    @Transactional
+    public Pedido confirmarPago(Usuario usuario, Long id) {
+
+        Pedido pedido = obtenerParaNegocio(usuario, id);
+        validarEstado(pedido, EstadoPedido.ESPERANDO_PAGO, "Este pedido no está esperando pago");
+
+        Pago pago = pagoRepository.findByPedidoId(id)
+                .orElseThrow(() -> ApiException.solicitudInvalida("El pedido no tiene un pago registrado"));
+
+        pago.setEstado(EstadoPago.PAGADO);
+        pago.setFecha(LocalDateTime.now());
+        pagoRepository.save(pago);
+
+        pedido.setEstado(EstadoPedido.ACEPTADO);
+        pedido.setFechaAceptado(LocalDateTime.now());
+        pedido.setLimitePago(null);
+
+        Pedido guardado = pedidoRepository.save(pedido);
+
+        notificarCliente(guardado, "Pago confirmado",
+                "Recibimos tu pago. Tu pedido #" + guardado.getId() + " se prepara y estará listo en unos "
                         + guardado.getTiempoPreparacion() + " minutos");
 
         return guardado;
+    }
+
+    @Transactional
+    public Pedido pagoNoLlego(Usuario usuario, Long id) {
+
+        Pedido pedido = obtenerParaNegocio(usuario, id);
+        validarEstado(pedido, EstadoPedido.ESPERANDO_PAGO, "Este pedido no está esperando pago");
+
+        if (pedido.getFechaAvisoPago() == null) {
+            throw ApiException.solicitudInvalida("El cliente todavía no avisó que pagó");
+        }
+
+        if (pedido.getFechaPagoObservado() != null) {
+            throw ApiException.conflicto("Ya marcaste que el pago no llegó");
+        }
+
+        LocalDateTime ahora = LocalDateTime.now();
+        pedido.setFechaPagoObservado(ahora);
+        pedido.setLimitePago(ahora.plusMinutes(ajustesService.obtener().getMinutosRevisionPago()));
+
+        Pedido guardado = pedidoRepository.save(pedido);
+
+        notificarCliente(guardado, "El puesto no encontró tu pago",
+                "Si ya pagaste el pedido #" + guardado.getId() + ", muestra tu comprobante en "
+                        + guardado.getNegocio().getNombre() + ". Si el puesto lo confirma, tu pedido sigue; si no, lo revisará el administrador");
+
+        return guardado;
+    }
+
+    @Transactional
+    public void vencerPagos() {
+
+        Ajustes ajustes = ajustesService.obtener();
+
+        for (Pedido pedido : pedidoRepository.findByEstadoAndLimitePagoBefore(EstadoPedido.ESPERANDO_PAGO, LocalDateTime.now())) {
+
+            boolean avisado = pedido.getFechaAvisoPago() != null;
+            boolean observado = pedido.getFechaPagoObservado() != null;
+
+            pagoRepository.findByPedidoId(pedido.getId()).ifPresent(pago -> {
+                pago.setEstado(EstadoPago.FALLIDO);
+                pagoRepository.save(pago);
+            });
+
+            pedido.setEstado(EstadoPedido.CANCELADO);
+            pedido.setLimitePago(null);
+            pedido.setMotivoCancelacion(avisado ? Limites.MOTIVO_PAGO_NO_CONFIRMADO : "No pagaste a tiempo");
+            Pedido guardado = pedidoRepository.save(pedido);
+
+            if (avisado) {
+                crearReclamoDePago(guardado, observado);
+
+                notificarCliente(guardado, "Pedido cancelado",
+                        "Cancelamos el pedido #" + guardado.getId() + " porque el puesto no confirmó tu pago. "
+                                + "Ya enviamos tu caso al administrador con tu número de operación");
+
+                notificacionService.crear(guardado.getNegocio().getPropietario(), guardado, "Pedido cancelado",
+                        "El pedido #" + guardado.getId() + " se canceló porque no confirmaste el pago. El administrador lo revisará");
+                continue;
+            }
+
+            Usuario cliente = guardado.getUsuario();
+            String aviso = "";
+
+            if (ajustes.getFaltaPorNoPagar() > 0) {
+                cliente.setFaltas(cliente.getFaltas() + 1);
+                usuarioRepository.save(cliente);
+                aviso = " Tienes " + cliente.getFaltas() + (cliente.getFaltas() == 1 ? " falta." : " faltas.");
+            }
+
+            notificarCliente(guardado, "Pedido cancelado",
+                    "No pagaste el pedido #" + guardado.getId() + " a tiempo y se canceló." + aviso);
+
+            notificacionService.crear(guardado.getNegocio().getPropietario(), guardado, "Pedido cancelado",
+                    "El cliente no pagó el pedido #" + guardado.getId() + " a tiempo y se canceló");
+        }
+    }
+
+    private void crearReclamoDePago(Pedido pedido, boolean observado) {
+
+        Reclamo reclamo = new Reclamo();
+        reclamo.setUsuario(pedido.getUsuario());
+        reclamo.setPedidoId(pedido.getId());
+        reclamo.setTipo("PAGO");
+        reclamo.setMensaje("Pago en disputa del pedido #" + pedido.getId() + " en " + pedido.getNegocio().getNombre()
+                + ": S/ " + String.format("%.2f", pedido.getTotal()) + " por "
+                + MetodosDigitales.nombre(pedido.getPago() == null ? null : pedido.getPago().getMetodo())
+                + ". Número de operación: " + pedido.getReferenciaPago() + ". "
+                + (observado ? "El puesto dijo que no recibió el pago." : "El puesto no respondió."));
+        reclamo.setEstado(Reclamo.ABIERTO);
+        reclamo.setFecha(LocalDateTime.now());
+        reclamoRepository.save(reclamo);
     }
 
     @Transactional
@@ -413,9 +603,11 @@ public class PedidoService {
             throw ApiException.prohibido("No puedes cancelar este pedido");
         }
 
-        if (pedido.getEstado() != EstadoPedido.PENDIENTE) {
+        boolean sinPagar = pedido.getEstado() == EstadoPedido.ESPERANDO_PAGO && pedido.getFechaAvisoPago() == null;
+
+        if (pedido.getEstado() != EstadoPedido.PENDIENTE && !sinPagar) {
             throw ApiException.solicitudInvalida(
-                    "Solo puedes cancelar mientras el negocio no haya aceptado el pedido");
+                    "Solo puedes cancelar antes de pagar o mientras el negocio no haya aceptado el pedido");
         }
 
         cancelarConReembolso(pedido, esAdmin ? "Cancelado por el administrador" : "Cancelado por el cliente");
@@ -496,6 +688,9 @@ public class PedidoService {
         pagoRepository.findByPedidoId(pedido.getId()).ifPresent(pago -> {
             if (pago.getEstado() == EstadoPago.PAGADO) {
                 pago.setEstado(EstadoPago.REEMBOLSADO);
+                pagoRepository.save(pago);
+            } else if (pago.getEstado() == EstadoPago.PENDIENTE) {
+                pago.setEstado(EstadoPago.FALLIDO);
                 pagoRepository.save(pago);
             }
         });

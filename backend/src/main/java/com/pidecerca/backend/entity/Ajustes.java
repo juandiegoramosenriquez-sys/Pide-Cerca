@@ -27,6 +27,12 @@ public class Ajustes {
 
     private Integer reclamosPorDia = 1;
 
+    private Integer minutosParaPagar = 10;
+
+    private Integer faltaPorNoPagar = 1;
+
+    private Integer minutosRevisionPago = 30;
+
     public Long getId() {
         return id;
     }
@@ -93,5 +99,29 @@ public class Ajustes {
 
     public void setReclamosPorDia(Integer valor) {
         this.reclamosPorDia = valor;
+    }
+
+    public Integer getMinutosParaPagar() {
+        return minutosParaPagar == null ? 10 : minutosParaPagar;
+    }
+
+    public void setMinutosParaPagar(Integer valor) {
+        this.minutosParaPagar = valor;
+    }
+
+    public Integer getFaltaPorNoPagar() {
+        return faltaPorNoPagar == null ? 1 : faltaPorNoPagar;
+    }
+
+    public void setFaltaPorNoPagar(Integer valor) {
+        this.faltaPorNoPagar = valor;
+    }
+
+    public Integer getMinutosRevisionPago() {
+        return minutosRevisionPago == null ? 30 : minutosRevisionPago;
+    }
+
+    public void setMinutosRevisionPago(Integer valor) {
+        this.minutosRevisionPago = valor;
     }
 }

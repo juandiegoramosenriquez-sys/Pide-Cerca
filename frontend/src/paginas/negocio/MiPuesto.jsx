@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LifeBuoy, Lock, MapPin, Store, User } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { SubirFoto } from '../../componentes/Foto'
+import CamposCobros, { aSolicitud, desdeRespuesta, errorCobros } from '../../componentes/CamposCobros'
 import MiCuenta, { AyudaCuenta } from '../../componentes/MiCuenta'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import SelectorHorario, { horarioDe } from '../../componentes/SelectorHorario'
@@ -158,6 +159,53 @@ function PestanaPuesto() {
   )
 }
 
+function Cobros() {
+  const mostrar = useAviso()
+  const [valor, setValor] = useState(null)
+  const [error, setError] = useState('')
+  const [guardando, setGuardando] = useState(false)
+
+  useEffect(() => {
+    api('/negocios/mio/cobros')
+      .then((r) => setValor(desdeRespuesta(r)))
+      .catch((e) => setError(e.message))
+  }, [])
+
+  async function guardar(e) {
+    e.preventDefault()
+    setError('')
+    const problema = errorCobros(valor)
+    if (problema) return setError(problema)
+    setGuardando(true)
+    try {
+      setValor(desdeRespuesta(await api('/negocios/mio/cobros', { metodo: 'PUT', cuerpo: aSolicitud(valor) })))
+      mostrar('Cobros guardados')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  if (!valor) return error ? <Error>{error}</Error> : null
+
+  return (
+    <form className="tarjeta formulario" onSubmit={guardar}>
+      <h2>Cobros</h2>
+      <p className="sub">Elige cómo te pagan tus clientes. Solo verán las formas que aceptes.</p>
+      {aSolicitud(valor).metodos.length > 0 &&
+        (valor.verificado ? (
+          <div className="aviso info">Tus cobros están verificados. Los clientes ven la marca “Verificado”.</div>
+        ) : (
+          <div className="aviso info">Tus cobros todavía no están verificados. El administrador los revisará. Si cambias un número, se vuelve a revisar.</div>
+        ))}
+      <CamposCobros valor={valor} alCambiar={setValor} />
+      <Error>{error}</Error>
+      <BotonCarga cargando={guardando}>Guardar cobros</BotonCarga>
+    </form>
+  )
+}
+
 function PestanaUbicacion() {
   const { negocio, compartir, setCompartir, errorGps } = useNegocio()
   const mostrar = useAviso()
@@ -234,7 +282,12 @@ export default function MiPuesto() {
         ))}
       </div>
 
-      {pestana === 'puesto' && <PestanaPuesto />}
+      {pestana === 'puesto' && (
+        <>
+          <PestanaPuesto />
+          <Cobros />
+        </>
+      )}
       {pestana === 'ubicacion' && <PestanaUbicacion />}
       {pestana === 'cuenta' && <MiCuenta />}
       {pestana === 'ayuda' && <AyudaCuenta />}

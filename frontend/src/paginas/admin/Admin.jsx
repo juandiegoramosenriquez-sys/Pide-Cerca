@@ -118,10 +118,10 @@ export function Resumen() {
   if (!datos) return error ? <Error>{error}</Error> : <Cargando />
 
   const porEstado = datos.pedidosPorEstado || {}
-  const enProceso = (porEstado.ACEPTADO || 0) + (porEstado.EN_PREPARACION || 0)
+  const enProceso = (porEstado.ACEPTADO || 0) + (porEstado.EN_PREPARACION || 0) + (porEstado.ESPERANDO_PAGO || 0)
   const valor = (clave) => (clave === 'EN_PREPARACION' ? enProceso : porEstado[clave] || 0)
   const total = Math.max(1, ESTADOS_ORDEN.reduce((s, [c]) => s + valor(c), 0))
-  const grupoDe = (estado) => (estado === 'ACEPTADO' ? 'EN_PREPARACION' : estado)
+  const grupoDe = (estado) => (estado === 'ACEPTADO' || estado === 'ESPERANDO_PAGO' ? 'EN_PREPARACION' : estado)
   const filtrados = pedidos.filter((p) => !filtro || grupoDe(p.estado) === filtro).slice(0, 15)
   const colores = { PENDIENTE: 'var(--rec-solido)', EN_PREPARACION: 'var(--pro-solido)', LISTO_PARA_RECOGER: 'var(--ok-solido)', RECOGIDO: 'var(--ent)', CANCELADO: 'var(--t3)' }
 
@@ -261,6 +261,7 @@ export function Puestos() {
             <p className="mini">
               Dueño: {n.propietarioNombre} · {n.propietarioCorreo} · {n.propietarioTelefono} · se registró {haceCuanto(n.fechaSolicitud)}
             </p>
+            {n.conBilleteras && <span className={'estado ' + (n.cobrosVerificados ? 'ok' : 'rec')} style={{ alignSelf: 'flex-start' }}>{n.cobrosVerificados ? 'Cobros verificados' : 'Cobros sin verificar'}</span>}
             <div className="fila envolver">
               <Link className="boton secundario chico" to={`/admin/puestos/${n.id}`}>
                 Ver ficha
@@ -394,14 +395,29 @@ const ESTADO_FICHA = {
 export function FichaPuesto() {
   const { id } = useParams()
   const navegar = useNavigate()
+  const mostrar = useAviso()
   const [ficha, setFicha] = useState(null)
   const [error, setError] = useState('')
+  const [ocupado, setOcupado] = useState(false)
 
   useEffect(() => {
     api(`/admin/negocios/${id}/ficha`)
       .then(setFicha)
       .catch((e) => setError(e.message))
   }, [id])
+
+  async function cambiarVerificacion() {
+    setOcupado(true)
+    try {
+      await api(`/admin/negocios/${id}/verificar-cobros?valor=${!ficha.cobrosVerificados}`, { metodo: 'POST' })
+      setFicha(await api(`/admin/negocios/${id}/ficha`))
+      mostrar(ficha.cobrosVerificados ? 'Verificación quitada' : 'Cobros verificados')
+    } catch (e) {
+      mostrar(e.message)
+    } finally {
+      setOcupado(false)
+    }
+  }
 
   if (!ficha) return error ? <Error>{error}</Error> : <Cargando />
 
@@ -447,6 +463,32 @@ export function FichaPuesto() {
           <Dato etiqueta="Horario">{horarioTexto(ficha) || 'Sin dato'}</Dato>
         </div>
         {conMapa ? <Mapa puestos={[ficha]} alto={180} /> : <p className="mini">Sin ubicación marcada.</p>}
+      </section>
+
+      <section className="tarjeta columna">
+        <h2>Cobros</h2>
+        <div>
+          <Dato etiqueta="Efectivo">{ficha.aceptaEfectivo ? 'Sí' : 'No'}</Dato>
+          {ficha.cobros.map((c) => (
+            <Dato key={c.codigo} etiqueta={c.nombre}>
+              {c.numero}
+            </Dato>
+          ))}
+          {ficha.cobros.length > 0 && <Dato etiqueta="A nombre de">{ficha.nombreCobro || 'Sin dato'}</Dato>}
+        </div>
+        {ficha.cobros.length === 0 ? (
+          <p className="mini">Este puesto solo cobra en efectivo.</p>
+        ) : (
+          <>
+            <span className={'estado ' + (ficha.cobrosVerificados ? 'ok' : 'rec')} style={{ alignSelf: 'flex-start' }}>
+              {ficha.cobrosVerificados ? 'Cobros verificados' : 'Cobros sin verificar'}
+            </span>
+            <p className="mini">Compara el nombre y el número con los datos del dueño antes de verificar. Si el puesto cambia un número, la verificación se quita sola.</p>
+            <button className={'boton chico ' + (ficha.cobrosVerificados ? 'secundario' : 'listo')} style={{ alignSelf: 'flex-start' }} onClick={cambiarVerificacion} disabled={ocupado}>
+              {ficha.cobrosVerificados ? 'Quitar verificación' : 'Marcar como verificado'}
+            </button>
+          </>
+        )}
       </section>
 
       <section className="tarjeta columna">

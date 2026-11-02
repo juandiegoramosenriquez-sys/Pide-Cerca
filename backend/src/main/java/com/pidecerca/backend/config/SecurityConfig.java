@@ -117,8 +117,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/pedidos/mios").hasRole(CLIENTE)
                         .requestMatchers(HttpMethod.GET, "/api/pedidos/negocio").hasRole(NEGOCIO)
                         .requestMatchers(HttpMethod.POST, "/api/pedidos/*/cancelar").hasAnyRole(CLIENTE, ADMIN)
+                        .requestMatchers(HttpMethod.POST, "/api/pedidos/*/avisar-pago").hasRole(CLIENTE)
                         .requestMatchers(HttpMethod.POST,
                                 "/api/pedidos/*/aceptar",
+                                "/api/pedidos/*/confirmar-pago",
+                                "/api/pedidos/*/pago-no-llego",
                                 "/api/pedidos/*/preparar",
                                 "/api/pedidos/*/listo",
                                 "/api/pedidos/*/recogido",

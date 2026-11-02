@@ -1,5 +1,8 @@
+import { BILLETERAS } from './metodos'
+
 export const ESTADOS = {
   PENDIENTE: { texto: 'Recibido', clase: 'rec' },
+  ESPERANDO_PAGO: { texto: 'Por pagar', clase: 'pro' },
   ACEPTADO: { texto: 'En proceso', clase: 'pro' },
   EN_PREPARACION: { texto: 'En proceso', clase: 'pro' },
   LISTO_PARA_RECOGER: { texto: 'Listo', clase: 'ok' },
@@ -9,8 +12,7 @@ export const ESTADOS = {
 }
 
 export const METODOS = {
-  YAPE: 'Yape',
-  PLIN: 'Plin',
+  ...Object.fromEntries(BILLETERAS.map((b) => [b.codigo, b.nombre])),
   TARJETA: 'Tarjeta',
   EFECTIVO: 'Efectivo'
 }
@@ -68,7 +70,7 @@ export function nombreCorto(usuario) {
 }
 
 export function esActivo(estado) {
-  return ['PENDIENTE', 'ACEPTADO', 'EN_PREPARACION', 'LISTO_PARA_RECOGER'].includes(estado)
+  return ['PENDIENTE', 'ESPERANDO_PAGO', 'ACEPTADO', 'EN_PREPARACION', 'LISTO_PARA_RECOGER'].includes(estado)
 }
 
 export function fechaLarga(valor) {

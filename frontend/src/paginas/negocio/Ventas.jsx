@@ -90,40 +90,21 @@ export default function Ventas() {
 
       <section className="columna">
         <h2>Historial</h2>
-        <div className="tabla-caja">
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Fecha</th>
-                <th>Cliente</th>
-                <th>Total</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {historial.map((p) => (
-                <tr key={p.id}>
-                  <td>
-                    <b>#{p.id}</b>
-                  </td>
-                  <td>{fechaCorta(p.fecha)}</td>
-                  <td>{nombreCorto(p.usuario)}</td>
-                  <td>{soles(p.total)}</td>
-                  <td>
-                    <Estado estado={p.estado} />
-                  </td>
-                </tr>
-              ))}
-              {historial.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="mini">
-                    Todavía no hay pedidos terminados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="filas">
+          {historial.map((p) => (
+            <div key={p.id} className="fila-item">
+              <span className="avatar">#{p.id}</span>
+              <div className="fila-item-texto">
+                <b>{nombreCorto(p.usuario)}</b>
+                <span className="mini">{fechaCorta(p.fecha)}</span>
+              </div>
+              <div className="fila-item-lado">
+                <b>{soles(p.total)}</b>
+                <Estado estado={p.estado} />
+              </div>
+            </div>
+          ))}
+          {historial.length === 0 && <p className="mini fila-item">Todavía no hay pedidos terminados.</p>}
         </div>
         {datos.terminados.length > cantidad && (
           <button className="boton secundario ancho" onClick={() => setCantidad((c) => c + 20)}>

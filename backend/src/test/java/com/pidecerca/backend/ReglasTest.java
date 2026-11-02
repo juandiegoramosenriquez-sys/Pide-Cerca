@@ -64,7 +64,7 @@ class ReglasTest {
 
     @Test
     void elAdminPuedeCambiarUnaRegla() {
-        Ajustes ajustes = servicio().actualizar(new AjustesRequest(20, 3, null, null, null, null, null, null));
+        Ajustes ajustes = servicio().actualizar(new AjustesRequest(20, 3, null, null, null, null, null, null, null, null, null));
         assertEquals(20, ajustes.getMinutosParaRecoger());
         assertEquals(3, ajustes.getFaltasBloqueanEfectivo());
         assertEquals(10, ajustes.getMaxPorProducto());
@@ -73,9 +73,9 @@ class ReglasTest {
     @Test
     void unaReglaFueraDeRangoSeRechaza() {
         AjustesService servicio = servicio();
-        assertThrows(ApiException.class, () -> servicio.actualizar(new AjustesRequest(2, null, null, null, null, null, null, null)));
-        assertThrows(ApiException.class, () -> servicio.actualizar(new AjustesRequest(null, 99, null, null, null, null, null, null)));
-        assertThrows(ApiException.class, () -> servicio.actualizar(new AjustesRequest(null, null, null, 0, null, null, null, null)));
+        assertThrows(ApiException.class, () -> servicio.actualizar(new AjustesRequest(2, null, null, null, null, null, null, null, null, null, null)));
+        assertThrows(ApiException.class, () -> servicio.actualizar(new AjustesRequest(null, 99, null, null, null, null, null, null, null, null, null)));
+        assertThrows(ApiException.class, () -> servicio.actualizar(new AjustesRequest(null, null, null, 0, null, null, null, null, null, null, null)));
     }
 
     @Test

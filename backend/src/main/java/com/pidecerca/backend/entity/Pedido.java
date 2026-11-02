@@ -38,6 +38,15 @@ public class Pedido {
 
     private LocalDateTime limiteRecoger;
 
+    private LocalDateTime limitePago;
+
+    private LocalDateTime fechaAvisoPago;
+
+    @Column(length = 20)
+    private String referenciaPago;
+
+    private LocalDateTime fechaPagoObservado;
+
     private String notas;
 
     @Column(length = 4)
@@ -144,6 +153,70 @@ public class Pedido {
 
     public void setLimiteRecoger(LocalDateTime limiteRecoger) {
         this.limiteRecoger = limiteRecoger;
+    }
+
+    public LocalDateTime getLimitePago() {
+        return limitePago;
+    }
+
+    public void setLimitePago(LocalDateTime limitePago) {
+        this.limitePago = limitePago;
+    }
+
+    public LocalDateTime getFechaAvisoPago() {
+        return fechaAvisoPago;
+    }
+
+    public void setFechaAvisoPago(LocalDateTime fechaAvisoPago) {
+        this.fechaAvisoPago = fechaAvisoPago;
+    }
+
+    public String getReferenciaPago() {
+        return referenciaPago;
+    }
+
+    public void setReferenciaPago(String referenciaPago) {
+        this.referenciaPago = referenciaPago;
+    }
+
+    public LocalDateTime getFechaPagoObservado() {
+        return fechaPagoObservado;
+    }
+
+    public void setFechaPagoObservado(LocalDateTime fechaPagoObservado) {
+        this.fechaPagoObservado = fechaPagoObservado;
+    }
+
+    public boolean getPagoObservado() {
+        return fechaPagoObservado != null;
+    }
+
+    public boolean getPagoAvisado() {
+        return fechaAvisoPago != null;
+    }
+
+    public java.util.Map<String, Object> getDatosPago() {
+        if (estado != EstadoPedido.ESPERANDO_PAGO || pago == null || negocio == null || usuario == null) {
+            return null;
+        }
+        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        if (autenticacion == null) {
+            return null;
+        }
+        boolean admin = autenticacion.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        boolean dueno = usuario.getCorreo() != null && usuario.getCorreo().equalsIgnoreCase(autenticacion.getName());
+        if (!admin && !dueno) {
+            return null;
+        }
+        String numero = negocio.numeroDe(pago.getMetodo());
+        java.util.Map<String, Object> datos = new java.util.LinkedHashMap<>();
+        datos.put("metodo", pago.getMetodo());
+        datos.put("numero", numero);
+        datos.put("nombre", negocio.getNombreCobro());
+        datos.put("verificado", negocio.getCobrosVerificados());
+        datos.put("monto", total);
+        return datos;
     }
 
     public String codigoReal() {

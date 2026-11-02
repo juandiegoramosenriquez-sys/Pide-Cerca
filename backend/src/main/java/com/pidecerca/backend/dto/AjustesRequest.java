@@ -8,5 +8,8 @@ public record AjustesRequest(
         Integer maxPorPedido,
         Integer intentosLoginMaximos,
         Integer minutosBloqueoLogin,
-        Integer reclamosPorDia) {
+        Integer reclamosPorDia,
+        Integer minutosParaPagar,
+        Integer faltaPorNoPagar,
+        Integer minutosRevisionPago) {
 }

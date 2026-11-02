@@ -3,6 +3,7 @@ package com.pidecerca.backend.controller;
 import com.pidecerca.backend.dto.CodigoRequest;
 import com.pidecerca.backend.dto.CrearPedidoRequest;
 import com.pidecerca.backend.dto.MotivoRequest;
+import com.pidecerca.backend.dto.AvisoPagoRequest;
 import com.pidecerca.backend.dto.TiempoRequest;
 import com.pidecerca.backend.entity.EstadoPedido;
 import com.pidecerca.backend.entity.Pedido;
@@ -55,6 +56,21 @@ public class PedidoController {
     public Pedido aceptar(@PathVariable Long id, @RequestBody(required = false) TiempoRequest request) {
         return pedidoService.aceptar(
                 usuarioActualService.obtener(), id, request == null ? null : request.minutos());
+    }
+
+    @PostMapping("/{id}/avisar-pago")
+    public Pedido avisarPago(@PathVariable Long id, @RequestBody AvisoPagoRequest request) {
+        return pedidoService.avisarPago(usuarioActualService.obtener(), id, request == null ? null : request.referencia());
+    }
+
+    @PostMapping("/{id}/confirmar-pago")
+    public Pedido confirmarPago(@PathVariable Long id) {
+        return pedidoService.confirmarPago(usuarioActualService.obtener(), id);
+    }
+
+    @PostMapping("/{id}/pago-no-llego")
+    public Pedido pagoNoLlego(@PathVariable Long id) {
+        return pedidoService.pagoNoLlego(usuarioActualService.obtener(), id);
     }
 
     @PostMapping("/{id}/preparar")

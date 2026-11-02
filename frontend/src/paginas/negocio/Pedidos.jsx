@@ -3,7 +3,7 @@ import { Check, Clock, Loader2, Plus, StickyNote } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import Cuenta from '../../componentes/Cuenta'
-import { Cargando, Estado, Modal, Vacio } from '../../componentes/Ui'
+import { Cargando, Confirmar, Estado, Modal, Vacio } from '../../componentes/Ui'
 import { ESTADOS, METODOS, avance, haceCuanto, minutosRestantes, nombreCorto, soles } from '../../util/formato'
 import { useNegocio } from './Negocio'
 
@@ -43,6 +43,7 @@ function TarjetaPedido({ pedido, ahora }) {
   const [rechazando, setRechazando] = useState(false)
   const [motivo, setMotivo] = useState(MOTIVOS[0])
   const [codigo, setCodigo] = useState('')
+  const [confirmandoPago, setConfirmandoPago] = useState(null)
   const grupo = ESTADOS[pedido.estado]?.clase
 
   async function ejecutar(accion, mensaje) {
@@ -57,11 +58,24 @@ function TarjetaPedido({ pedido, ahora }) {
     }
   }
 
+  const digital = Boolean(pedido.pago?.metodo) && pedido.pago.metodo !== 'EFECTIVO'
+
   const aceptar = () =>
+    ejecutar(
+      async () => {
+        const aceptado = await api(`/pedidos/${pedido.id}/aceptar`, { metodo: 'POST', cuerpo: { minutos } })
+        return digital ? aceptado : api(`/pedidos/${pedido.id}/preparar`, { metodo: 'POST' })
+      },
+      digital ? `Pedido #${pedido.id} aceptado. Esperando el pago del cliente` : `Pedido #${pedido.id} aceptado. ¡A cocinar!`
+    )
+
+  const confirmarPago = () =>
     ejecutar(async () => {
-      await api(`/pedidos/${pedido.id}/aceptar`, { metodo: 'POST', cuerpo: { minutos } })
+      await api(`/pedidos/${pedido.id}/confirmar-pago`, { metodo: 'POST' })
       return api(`/pedidos/${pedido.id}/preparar`, { metodo: 'POST' })
-    }, `Pedido #${pedido.id} aceptado. ¡A cocinar!`)
+    }, `Pago confirmado. ¡A cocinar el #${pedido.id}!`)
+
+  const pagoNoLlego = () => ejecutar(() => api(`/pedidos/${pedido.id}/pago-no-llego`, { metodo: 'POST' }), `Marcaste que el pago del #${pedido.id} no llegó. El cliente puede mostrarte su comprobante`)
 
   const listo = () => ejecutar(() => api(`/pedidos/${pedido.id}/listo`, { metodo: 'POST' }), `Le avisamos al cliente que el #${pedido.id} está listo`)
   const pideCodigo = Boolean(pedido.codigo)
@@ -77,7 +91,7 @@ function TarjetaPedido({ pedido, ahora }) {
     )
   const rechazar = () => {
     setRechazando(false)
-    ejecutar(() => api(`/pedidos/${pedido.id}/rechazar`, { metodo: 'POST', cuerpo: { motivo } }), `Pedido #${pedido.id} rechazado. Se devolverá el dinero`)
+    ejecutar(() => api(`/pedidos/${pedido.id}/rechazar`, { metodo: 'POST', cuerpo: { motivo } }), `Pedido #${pedido.id} rechazado`)
   }
 
   const faltan = minutosRestantes(pedido, ahora)
@@ -106,7 +120,11 @@ function TarjetaPedido({ pedido, ahora }) {
         </div>
       )}
       <div className="fila entre">
-        <span className="sub">{pedido.pago?.metodo === 'EFECTIVO' ? 'Cobras en efectivo al entregar' : `Pagado con ${METODOS[pedido.pago?.metodo] || 'app'}`}</span>
+        <span className="sub">
+          {pedido.pago?.metodo === 'EFECTIVO'
+            ? 'Cobras en efectivo al entregar'
+            : `${pedido.pago?.estado === 'PAGADO' ? 'Pagado con' : 'Pagará con'} ${METODOS[pedido.pago?.metodo] || 'app'}`}
+        </span>
         <h3>{soles(pedido.total)}</h3>
       </div>
 
@@ -131,7 +149,70 @@ function TarjetaPedido({ pedido, ahora }) {
         </>
       )}
 
-      {grupo === 'pro' && (
+      {pedido.estado === 'ESPERANDO_PAGO' && (
+        <>
+          {pedido.pagoObservado ? (
+            <div className="aviso alerta columna" style={{ gap: 2, alignItems: 'flex-start' }}>
+              <b>Marcaste que el pago no llegó</b>
+              <span>Si {nombreCorto(pedido.usuario)} te muestra su comprobante, puedes confirmarlo. Si no, el administrador lo revisa.</span>
+              <span>N.º de operación: {pedido.referenciaPago}</span>
+            </div>
+          ) : pedido.pagoAvisado ? (
+            <div className="aviso alerta columna" style={{ gap: 2, alignItems: 'flex-start' }}>
+              <b>
+                {nombreCorto(pedido.usuario)} dice que ya pagó {soles(pedido.total)}
+              </b>
+              <span>N.º de operación: {pedido.referenciaPago}</span>
+              <span>Revísalo en tu {METODOS[pedido.pago?.metodo]} antes de confirmar.</span>
+            </div>
+          ) : (
+            <>
+              <div className="aviso info">
+                Esperando que {nombreCorto(pedido.usuario)} pague {soles(pedido.total)} por {METODOS[pedido.pago?.metodo]}
+              </div>
+              <Cuenta limite={pedido.limitePago} texto="Tiene" alTerminar={recargar} />
+            </>
+          )}
+          <div className={pedido.pagoAvisado && !pedido.pagoObservado ? 'dos' : ''}>
+            {pedido.pagoAvisado && !pedido.pagoObservado && (
+              <button className="boton peligro" onClick={() => setConfirmandoPago('nollego')} disabled={ocupado}>
+                No me llegó
+              </button>
+            )}
+            <button className="boton principal ancho" onClick={() => setConfirmandoPago('recibi')} disabled={ocupado}>
+              {ocupado ? <Loader2 className="giro" size={22} /> : <Check size={22} />}
+              {pedido.pagoObservado ? 'Ahora sí lo veo' : 'Recibí el pago'}
+            </button>
+          </div>
+          {confirmandoPago === 'recibi' && (
+            <Confirmar
+              titulo={`¿Ya viste ${soles(pedido.total)} de ${nombreCorto(pedido.usuario)}?`}
+              texto={`Revisa tu ${METODOS[pedido.pago?.metodo]} antes de confirmar. ${pedido.referenciaPago ? `Número de operación: ${pedido.referenciaPago}. ` : ''}Si confirmas, empiezas a preparar el pedido.`}
+              textoConfirmar="Sí, ya lo recibí"
+              peligro={false}
+              alConfirmar={() => {
+                setConfirmandoPago(null)
+                confirmarPago()
+              }}
+              alCancelar={() => setConfirmandoPago(null)}
+            />
+          )}
+          {confirmandoPago === 'nollego' && (
+            <Confirmar
+              titulo="¿No encontraste el pago?"
+              texto={`${nombreCorto(pedido.usuario)} podrá mostrarte su comprobante en el puesto. Si no se resuelve, el administrador revisa el caso.`}
+              textoConfirmar="Sí, no me llegó"
+              alConfirmar={() => {
+                setConfirmandoPago(null)
+                pagoNoLlego()
+              }}
+              alCancelar={() => setConfirmandoPago(null)}
+            />
+          )}
+        </>
+      )}
+
+      {grupo === 'pro' && pedido.estado !== 'ESPERANDO_PAGO' && (
         <>
           <div className="fila entre">
             <span className="sub fila" style={{ gap: 6 }}>

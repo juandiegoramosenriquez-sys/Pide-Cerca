@@ -66,6 +66,14 @@ public class AdminController {
         return SolicitudNegocioResponse.de(negocio);
     }
 
+    @PostMapping("/negocios/{id}/verificar-cobros")
+    public SolicitudNegocioResponse verificarCobros(@PathVariable Long id, @RequestParam(defaultValue = "true") boolean valor) {
+        Negocio negocio = negocioService.verificarCobros(id, valor);
+        registroAccionService.registrar(usuarioActualService.obtener(), valor ? "VERIFICAR_COBROS" : "QUITAR_VERIFICACION_COBROS",
+                (valor ? "Verificaste los cobros del puesto " : "Quitaste la verificación de cobros del puesto ") + negocio.getNombre());
+        return SolicitudNegocioResponse.de(negocio);
+    }
+
     @PostMapping("/negocios/{id}/rechazar")
     public SolicitudNegocioResponse rechazar(@PathVariable Long id, @RequestBody(required = false) MotivoRequest request) {
         Negocio negocio = negocioService.rechazar(id, request == null ? null : request.motivo());

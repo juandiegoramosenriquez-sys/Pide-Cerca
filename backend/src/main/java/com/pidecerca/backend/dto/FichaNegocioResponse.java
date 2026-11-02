@@ -1,10 +1,12 @@
 package com.pidecerca.backend.dto;
 
 import com.pidecerca.backend.entity.EstadoAprobacion;
+import com.pidecerca.backend.entity.MetodosDigitales;
 import com.pidecerca.backend.entity.Negocio;
 import com.pidecerca.backend.entity.Usuario;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record FichaNegocioResponse(
         Long id,
@@ -31,7 +33,14 @@ public record FichaNegocioResponse(
         String propietarioTelefono,
         long pedidos,
         double ventas,
-        long sinResponder) {
+        long sinResponder,
+        String nombreCobro,
+        Boolean aceptaEfectivo,
+        Boolean cobrosVerificados,
+        List<Cobro> cobros) {
+
+    public record Cobro(String codigo, String nombre, String numero) {
+    }
 
     public static FichaNegocioResponse de(Negocio negocio, long pedidos, double ventas, long sinResponder) {
         Usuario dueno = negocio.getPropietario();
@@ -62,7 +71,13 @@ public record FichaNegocioResponse(
                 dueno == null ? null : Privacidad.ocultarTelefono(dueno.getTelefono()),
                 pedidos,
                 ventas,
-                sinResponder
+                sinResponder,
+                negocio.getNombreCobro(),
+                negocio.getAceptaEfectivo(),
+                negocio.getCobrosVerificados(),
+                negocio.getCobros().stream()
+                        .map(c -> new Cobro(c.getCodigo(), MetodosDigitales.nombre(c.getCodigo()), c.getNumero()))
+                        .toList()
         );
     }
 }

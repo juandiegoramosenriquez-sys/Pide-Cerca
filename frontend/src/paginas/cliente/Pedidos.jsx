@@ -6,14 +6,14 @@ import { useAviso } from '../../contexto/Aviso'
 import BarrasSemana from '../../componentes/BarrasSemana'
 import Calificar from '../../componentes/Calificar'
 import Cuenta from '../../componentes/Cuenta'
-import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
-import { METODOS, esActivo, fechaCorta, minutosRestantes, soles } from '../../util/formato'
+import { BotonCarga, Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
+import { METODOS, esActivo, fechaCompleta, fechaCorta, minutosRestantes, soles } from '../../util/formato'
 import { useCliente } from './Cliente'
 
 const PASOS = ['Recibido', 'En proceso', 'Listo', 'Recogido']
 
 function pasoDe(estado) {
-  return { PENDIENTE: 0, ACEPTADO: 1, EN_PREPARACION: 1, LISTO_PARA_RECOGER: 2, RECOGIDO: 3 }[estado] ?? -1
+  return { PENDIENTE: 0, ESPERANDO_PAGO: 0, ACEPTADO: 1, EN_PREPARACION: 1, LISTO_PARA_RECOGER: 2, RECOGIDO: 3 }[estado] ?? -1
 }
 
 function esEfectivo(pedido) {
@@ -25,18 +25,142 @@ function textoPago(pedido) {
     if (pedido.estado === 'CANCELADO' || pedido.estado === 'NO_RECOGIDO') return 'Sin cobro'
     return pedido.estado === 'RECOGIDO' ? 'Pagado al recoger' : 'Pagas al recoger'
   }
+  if (pedido.pago?.estado === 'PENDIENTE') return 'Por pagar'
+  if (pedido.pago?.estado === 'FALLIDO') return 'Sin cobro'
   return pedido.pago?.estado === 'REEMBOLSADO' ? 'Reembolsado' : 'Pagado'
 }
 
 function mensaje(pedido) {
   if (pedido.estado === 'PENDIENTE') return 'Esperando que el puesto acepte tu pedido'
+  if (pedido.estado === 'ESPERANDO_PAGO') return pedido.pagoObservado
+      ? 'El puesto no encontró tu pago. Muestra tu comprobante en el puesto'
+      : pedido.pagoAvisado
+        ? 'Esperando que el puesto confirme tu pago'
+        : '¡Aceptado! Paga para que lo preparen'
   if (pedido.estado === 'LISTO_PARA_RECOGER') return '¡Listo! Acércate y di tu código'
   if (pedido.estado === 'RECOGIDO') return '¡Buen provecho! Gracias por usar PideCerca'
   if (pedido.estado === 'NO_RECOGIDO') return 'No recogiste tu pedido a tiempo'
-  if (pedido.estado === 'CANCELADO') return pedido.motivoCancelacion ? `${pedido.motivoCancelacion}. ${esEfectivo(pedido) ? 'No se te cobró nada' : 'Te devolvimos tu dinero'}` : 'Pedido cancelado'
+  if (pedido.estado === 'CANCELADO') return pedido.motivoCancelacion ? `${pedido.motivoCancelacion}. ${pedido.pago?.estado === 'REEMBOLSADO' ? 'Te devolvimos tu dinero' : 'No se te cobró nada'}` : 'Pedido cancelado'
   const faltan = minutosRestantes(pedido)
   if (faltan === null) return 'Tu pedido se está preparando'
   return faltan > 0 ? `Estará listo en unos ${faltan} min` : 'Ya casi está listo'
+}
+
+function PagarPedido({ pedido, alActualizar }) {
+  const mostrar = useAviso()
+  const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
+  const [referencia, setReferencia] = useState('')
+  const datos = pedido.datosPago
+  const billetera = METODOS[datos.metodo] || datos.metodo
+  const numero = datos.numero || ''
+  const formateado = `${numero.slice(0, 3)} ${numero.slice(3, 6)} ${numero.slice(6)}`.trim()
+
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(numero)
+      mostrar('Número copiado')
+    } catch {
+      mostrar(`No se pudo copiar. Anótalo: ${formateado}`)
+    }
+  }
+
+  async function avisar(e) {
+    e.preventDefault()
+    setError('')
+    setEnviando(true)
+    try {
+      alActualizar(await api(`/pedidos/${pedido.id}/avisar-pago`, { metodo: 'POST', cuerpo: { referencia } }))
+      mostrar('Avisamos al puesto. Espera su confirmación')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  if (pedido.pagoAvisado) {
+    return (
+      <section className="tarjeta columna comprobante" style={{ gap: 0 }}>
+        <h2>Mi comprobante</h2>
+        <p className="mini" style={{ marginBottom: 8 }}>
+          Si el puesto te lo pide, muéstrale esta pantalla.
+        </p>
+        <div className="ficha-dato">
+          <span>Pedido</span>
+          <b>#{pedido.id}</b>
+        </div>
+        <div className="ficha-dato">
+          <span>Puesto</span>
+          <b>{pedido.negocio?.nombre}</b>
+        </div>
+        <div className="ficha-dato">
+          <span>Monto</span>
+          <b>{soles(datos.monto)}</b>
+        </div>
+        <div className="ficha-dato">
+          <span>Pagado por</span>
+          <b>{billetera}</b>
+        </div>
+        <div className="ficha-dato">
+          <span>N.º de operación</span>
+          <b>{pedido.referenciaPago}</b>
+        </div>
+        <div className="ficha-dato">
+          <span>Avisaste a las</span>
+          <b>{fechaCompleta(pedido.fechaAvisoPago)}</b>
+        </div>
+        {pedido.pagoObservado ? (
+          <div className="aviso alerta" style={{ marginTop: 12 }}>
+            El puesto no encontró tu pago. Si ya pagaste, muestra este comprobante en el puesto.
+          </div>
+        ) : (
+          <div className="aviso info" style={{ marginTop: 12 }}>
+            Avisamos al puesto. Espera a que confirme tu pago.
+          </div>
+        )}
+      </section>
+    )
+  }
+
+  return (
+    <form className="tarjeta columna" style={{ gap: 0 }} onSubmit={avisar}>
+      <h2>Paga con {billetera}</h2>
+      <div className="ficha-dato">
+        <span>A nombre de</span>
+        <b className="fila" style={{ gap: 8, justifyContent: 'flex-end' }}>
+          {datos.nombre}
+          {datos.verificado && <span className="estado ok">Verificado</span>}
+        </b>
+      </div>
+      <div className="ficha-dato">
+        <span>Número</span>
+        <b className="fila" style={{ gap: 8 }}>
+          {formateado}
+          <button type="button" className="boton chico secundario" onClick={copiar}>
+            Copiar
+          </button>
+        </b>
+      </div>
+      <div className="ficha-dato">
+        <span>Monto</span>
+        <b>{soles(datos.monto)}</b>
+      </div>
+      <span className="mini" style={{ margin: '8px 0 14px' }}>
+        Antes de pagar, revisa que el nombre sea el mismo.
+      </span>
+      <div className="campo">
+        <label htmlFor="operacion">Número de operación</label>
+        <input id="operacion" inputMode="numeric" autoComplete="off" maxLength={20} placeholder="Lo ves en tu billetera después de pagar" value={referencia} onChange={(e) => setReferencia(e.target.value)} />
+      </div>
+      <div style={{ marginTop: 14 }}>
+        <Error>{error}</Error>
+        <BotonCarga cargando={enviando} disabled={referencia.trim().length < 4}>
+          Ya pagué
+        </BotonCarga>
+      </div>
+    </form>
+  )
 }
 
 export function SeguimientoPedido() {
@@ -73,7 +197,7 @@ export function SeguimientoPedido() {
     setCancelando(false)
     try {
       setPedido(await api(`/pedidos/${id}/cancelar`, { metodo: 'POST' }))
-      mostrar(esEfectivo(pedido) ? 'Pedido cancelado. No se te cobró nada' : 'Pedido cancelado. Te devolveremos tu dinero')
+      mostrar('Pedido cancelado. No se te cobró nada')
     } catch (e) {
       setError(e.message)
     }
@@ -102,6 +226,7 @@ export function SeguimientoPedido() {
         <p style={{ fontWeight: 700, marginTop: 4 }}>{mensaje(pedido)}</p>
         {pedido.estado === 'PENDIENTE' && <Cuenta limite={pedido.limiteAceptar} texto="Responde en" />}
         {pedido.estado === 'LISTO_PARA_RECOGER' && <Cuenta limite={pedido.limiteRecoger} texto="Recógelo en" />}
+        {pedido.estado === 'ESPERANDO_PAGO' && !pedido.pagoAvisado && <Cuenta limite={pedido.limitePago} texto="Tienes" />}
         {pedido.codigo && esActivo(pedido.estado) && (
           <div className="codigo-entrega">
             <span>Código de entrega</span>
@@ -124,6 +249,8 @@ export function SeguimientoPedido() {
           ))}
         </div>
       )}
+
+      {pedido.estado === 'ESPERANDO_PAGO' && pedido.datosPago && <PagarPedido pedido={pedido} alActualizar={setPedido} />}
 
       <section className="tarjeta columna" style={{ gap: 4 }}>
         <h2>{pedido.negocio?.nombre}</h2>
@@ -160,7 +287,7 @@ export function SeguimientoPedido() {
         </button>
       )}
 
-      {pedido.estado === 'PENDIENTE' && (
+      {(pedido.estado === 'PENDIENTE' || (pedido.estado === 'ESPERANDO_PAGO' && !pedido.pagoAvisado)) && (
         <button className="boton peligro ancho" onClick={() => setCancelando(true)}>
           Cancelar pedido
         </button>
@@ -168,7 +295,7 @@ export function SeguimientoPedido() {
 
       {cancelando && (
         <Modal titulo="¿Cancelar tu pedido?" alCerrar={() => setCancelando(false)}>
-          <p className="sub">Solo puedes cancelar mientras el puesto no lo acepte. {esEfectivo(pedido) ? 'No se te cobrará nada.' : 'Te devolveremos tu dinero.'}</p>
+          <p className="sub">Puedes cancelar mientras no hayas pagado. No se te cobrará nada.</p>
           <div className="dos">
             <button className="boton secundario" onClick={() => setCancelando(false)}>
               No, mantener

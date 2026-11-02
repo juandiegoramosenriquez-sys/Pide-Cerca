@@ -5,6 +5,7 @@ import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { BotonCarga, Error, Vacio } from '../../componentes/Ui'
 import { METODOS, distancia, soles } from '../../util/formato'
+import { BILLETERAS } from '../../util/metodos'
 import { AVISO_METROS, aPie, metrosAlPuesto, puntoGuardado } from '../../util/ubicacion'
 import { useCliente } from './Cliente'
 
@@ -50,11 +51,14 @@ function AvisoCerrado() {
 }
 
 const OPCIONES_PAGO = [
-  { clave: 'YAPE', detalle: 'Paga con tu celular' },
-  { clave: 'PLIN', detalle: 'Paga con tu celular' },
-  { clave: 'TARJETA', detalle: 'Débito o crédito' },
+  ...BILLETERAS.map((b) => ({ clave: b.codigo, detalle: 'Pagas cuando el puesto acepte tu pedido' })),
   { clave: 'EFECTIVO', detalle: 'Pagas al recoger' }
 ]
+
+function recibe(puesto, clave) {
+  if (!puesto) return true
+  return clave === 'EFECTIVO' ? puesto.aceptaEfectivo !== false : (puesto.metodosDigitales || []).includes(clave)
+}
 
 export default function Carrito() {
   const navegar = useNavigate()
@@ -66,6 +70,7 @@ export default function Carrito() {
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const { abierto, negocio: puesto } = usePuesto(carrito.negocio?.id)
+  const opciones = OPCIONES_PAGO.filter((o) => recibe(puesto, o.clave))
   const metros = metrosAlPuesto(puesto || carrito.negocio)
   const muyLejos = metros !== null && metros > ajustes.distanciaMaximaMetros
   const lejos = metros !== null && metros > AVISO_METROS && !muyLejos
@@ -79,8 +84,12 @@ export default function Carrito() {
   }, [])
 
   useEffect(() => {
-    if (efectivoBloqueado && metodo === 'EFECTIVO') setMetodo('YAPE')
+    if (efectivoBloqueado && metodo === 'EFECTIVO') setMetodo(opciones.find((o) => o.clave !== 'EFECTIVO')?.clave || 'EFECTIVO')
   }, [efectivoBloqueado, metodo])
+
+  useEffect(() => {
+    if (puesto && opciones.length && !opciones.some((o) => o.clave === metodo)) setMetodo(opciones[0].clave)
+  }, [puesto])
 
   if (!carrito.items.length) {
     return (
@@ -145,7 +154,7 @@ export default function Carrito() {
         </button>
         <h1>¿Cómo quieres pagar?</h1>
         <div className="lista" role="radiogroup" aria-label="Método de pago">
-          {OPCIONES_PAGO.map((o) => (
+          {opciones.map((o) => (
             <button
               key={o.clave}
               role="radio"
@@ -176,14 +185,18 @@ export default function Carrito() {
             </button>
           ))}
         </div>
-        <div className="aviso info">Pago de prueba: no se cobra dinero real.</div>
+        <div className="aviso info">
+          {metodo === 'EFECTIVO'
+            ? 'Pagas en efectivo cuando recojas tu pedido.'
+            : 'No pagas ahora. Cuando el puesto acepte tu pedido te mostraremos a quién pagar.'}
+        </div>
         {resumen}
         {!abierto && <AvisoCerrado />}
         {abierto && muyLejos && <AvisoLejos metros={metros} muyLejos limite={ajustes.distanciaMaximaMetros} />}
         {puedePagar && <Error>{error}</Error>}
         {puedePagar ? (
           <BotonCarga cargando={enviando} onClick={pagar}>
-            Pagar {soles(total)}
+            Hacer pedido · {soles(total)}
           </BotonCarga>
         ) : (
           <button className="boton principal ancho" onClick={() => navegar('/')}>

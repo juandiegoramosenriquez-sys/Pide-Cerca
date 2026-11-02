@@ -16,6 +16,8 @@ public final class Limites {
 
     public static final String MOTIVO_SIN_RESPUESTA = "El puesto no respondió a tiempo";
 
+    public static final String MOTIVO_PAGO_NO_CONFIRMADO = "Pago no confirmado";
+
     private static final DateTimeFormatter FORMATO =
             DateTimeFormatter.ofPattern("d 'de' MMMM", Locale.forLanguageTag("es-PE"));
 

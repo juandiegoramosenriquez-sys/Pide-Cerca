@@ -196,13 +196,11 @@ function SeccionClientes() {
         {datos.map((c) => (
           <div key={c.id} className={'fila-item' + (c.activo ? '' : ' apagado')}>
             <div className="fila-item-texto">
-              <b>
-                <button type="button" style={{ background: 'none', border: 0, padding: 0, font: 'inherit', fontWeight: 700, color: 'inherit', textAlign: 'left' }} onClick={() => navegar(`/admin/clientes/${c.id}`)}>
-                  {c.nombre}
-                </button>
-              </b>
+              <button type="button" className="enlace-texto" onClick={() => navegar(`/admin/clientes/${c.id}`)}>
+                {c.nombre}
+              </button>
               <span className="mini">
-                {c.faltas} {c.faltas === 1 ? 'falta' : 'faltas'} · {c.noRecogidos} no recogidos · {c.cancelados} cancelados · {c.pedidos} pedidos
+                {c.faltas} {c.faltas === 1 ? 'falta' : 'faltas'} · {c.noRecogidos} no recogidos · {c.cancelados} cancelados{c.disputas > 0 ? ` · ${c.disputas} pagos en disputa` : ''} · {c.pedidos} pedidos
               </span>
             </div>
             <div className="fila-item-lado">
@@ -473,7 +471,10 @@ const CAMPOS_REGLAS = [
   ['maxPorPedido', 'Máximo por pedido', 'productos', 1, 100],
   ['intentosLoginMaximos', 'Intentos de ingreso antes de bloquear', 'intentos', 3, 20],
   ['minutosBloqueoLogin', 'Minutos de bloqueo por intentos', 'min', 1, 120],
-  ['reclamosPorDia', 'Reclamos que puede enviar cada persona por día', 'reclamos', 1, 10]
+  ['reclamosPorDia', 'Reclamos que puede enviar cada persona por día', 'reclamos', 1, 10],
+  ['minutosParaPagar', 'Minutos que tiene el cliente para pagar', 'min', 3, 60],
+  ['faltaPorNoPagar', 'Falta por no pagar a tiempo (0 no cuenta, 1 sí)', 'falta', 0, 1],
+  ['minutosRevisionPago', 'Minutos para resolver un pago en revisión', 'min', 5, 240]
 ]
 
 function SeccionReglas() {
@@ -503,7 +504,10 @@ function SeccionReglas() {
           maxPorPedido: Number(valores.maxPorPedido),
           intentosLoginMaximos: Number(valores.intentosLoginMaximos),
           minutosBloqueoLogin: Number(valores.minutosBloqueoLogin),
-          reclamosPorDia: Number(valores.reclamosPorDia)
+          reclamosPorDia: Number(valores.reclamosPorDia),
+          minutosParaPagar: Number(valores.minutosParaPagar),
+          faltaPorNoPagar: Number(valores.faltaPorNoPagar),
+          minutosRevisionPago: Number(valores.minutosRevisionPago)
         }
       })
       mostrar('Reglas guardadas')

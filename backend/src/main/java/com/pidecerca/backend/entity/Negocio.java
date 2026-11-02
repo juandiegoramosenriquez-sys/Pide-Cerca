@@ -1,6 +1,8 @@
 package com.pidecerca.backend.entity;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -99,6 +101,17 @@ public class Negocio {
     private Long totalCalificaciones;
 
     private Boolean aperturaAutomatica = false;
+
+    @OneToMany(mappedBy = "negocio", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<MetodoCobro> cobros = new ArrayList<>();
+
+    @JsonIgnore
+    private String nombreCobro;
+
+    private Boolean aceptaEfectivo = true;
+
+    private Boolean cobrosVerificados = false;
 
     private Boolean abiertoPorHorario = false;
 
@@ -378,5 +391,54 @@ public class Negocio {
 
     public void setDistanciaMetros(Double distanciaMetros) {
         this.distanciaMetros = distanciaMetros;
+    }
+
+    public String getNombreCobro() {
+        return nombreCobro;
+    }
+
+    public void setNombreCobro(String nombreCobro) {
+        this.nombreCobro = nombreCobro;
+    }
+
+    public Boolean getAceptaEfectivo() {
+        return aceptaEfectivo == null || aceptaEfectivo;
+    }
+
+    public void setAceptaEfectivo(Boolean aceptaEfectivo) {
+        this.aceptaEfectivo = aceptaEfectivo;
+    }
+
+    public Boolean getCobrosVerificados() {
+        return cobrosVerificados != null && cobrosVerificados;
+    }
+
+    public void setCobrosVerificados(Boolean cobrosVerificados) {
+        this.cobrosVerificados = cobrosVerificados;
+    }
+
+    public List<MetodoCobro> getCobros() {
+        return cobros;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public List<String> getMetodosDigitales() {
+        return cobros.stream().map(MetodoCobro::getCodigo).toList();
+    }
+
+    public boolean aceptaMetodo(String codigo) {
+        return cobros.stream().anyMatch(c -> c.getCodigo().equals(codigo));
+    }
+
+    public String numeroDe(String codigo) {
+        return cobros.stream().filter(c -> c.getCodigo().equals(codigo)).map(MetodoCobro::getNumero).findFirst().orElse(null);
+    }
+
+    public void agregarCobro(String codigo, String numero) {
+        MetodoCobro cobro = new MetodoCobro();
+        cobro.setNegocio(this);
+        cobro.setCodigo(codigo);
+        cobro.setNumero(numero);
+        cobros.add(cobro);
     }
 }

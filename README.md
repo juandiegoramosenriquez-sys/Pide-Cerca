@@ -31,9 +31,15 @@ Pide-Cerca
 - **Negocio (la tía):** abre y cierra su puesto (también solo, según su horario), recibe pedidos con aviso sonoro, marca "Se acabó" con un toque, maneja su menú, ve sus ventas por día y recibe los avisos del administrador.
 - **Administrador:** aprueba puestos, ve la ficha de puestos y clientes, y en la pestaña Control ve el ranking de ventas, puestos con problemas, clientes con faltas, el dinero, los reclamos, manda comunicados, cambia las reglas de la plataforma, revisa la seguridad y descarga reportes en Excel.
 
+## Cómo se paga
+
+- **Efectivo:** el cliente paga al recoger.
+- **Yape, Plin u otra billetera:** el cliente hace el pedido sin pagar, la tía lo acepta, y recién ahí el cliente ve a quién pagar (número, nombre y monto) y toca "Ya pagué". La tía lo confirma en su propia billetera con "Recibí el pago" y empieza a preparar. Si el cliente no paga a tiempo, el pedido se cancela y suma una falta. Cada puesto elige qué formas de pago acepta, al registrarse o en Mi puesto, Cobros.
+- Agregar otra billetera es una línea en `MetodosDigitales.java` (backend) y otra en `util/metodos.js` (web).
+
 ## Reglas que cambia el administrador
 
-Minutos para recoger un pedido listo, faltas que bloquean el efectivo, distancia máxima para pedir, máximo por producto y por pedido, intentos de ingreso antes de bloquear, minutos de bloqueo y reclamos por día. Están en Control, pestaña Reglas.
+Minutos para recoger un pedido listo, faltas que bloquean el efectivo, distancia máxima para pedir, máximo por producto y por pedido, intentos de ingreso antes de bloquear, minutos de bloqueo y reclamos por día, minutos para pagar y si no pagar cuenta como falta. Están en Control, pestaña Reglas.
 
 ## Diseño
 

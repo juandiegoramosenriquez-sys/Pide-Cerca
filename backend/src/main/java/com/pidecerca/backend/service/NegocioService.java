@@ -1,11 +1,13 @@
 package com.pidecerca.backend.service;
 
+import com.pidecerca.backend.dto.CobrosRequest;
 import com.pidecerca.backend.dto.CrearNegocioRequest;
 import com.pidecerca.backend.dto.RegistroNegocioRequest;
 import com.pidecerca.backend.dto.FichaNegocioResponse;
 import com.pidecerca.backend.entity.EstadoAprobacion;
 import com.pidecerca.backend.entity.EstadoPedido;
 import com.pidecerca.backend.entity.Limites;
+import com.pidecerca.backend.entity.MetodosDigitales;
 import com.pidecerca.backend.entity.Negocio;
 import com.pidecerca.backend.entity.Pedido;
 import com.pidecerca.backend.entity.Rol;
@@ -185,10 +187,17 @@ public class NegocioService {
             throw ApiException.solicitudInvalida("Escribe el nombre de tu puesto");
         }
 
+        CobrosRequest cobros = request.cobros() == null
+                ? new CobrosRequest(java.util.List.of(), null, true)
+                : request.cobros();
+
         authService.exigirPrivacidad(request.propietario());
-        Usuario propietario = authService.crearUsuario(request.propietario(), Rol.NEGOCIO);
 
         Negocio negocio = new Negocio();
+        aplicarCobros(negocio, cobros);
+
+        Usuario propietario = authService.crearUsuario(request.propietario(), Rol.NEGOCIO);
+
         copiarDatos(request.negocio(), negocio);
         negocio.setPropietario(propietario);
         negocio.setActivo(true);
@@ -215,6 +224,19 @@ public class NegocioService {
         negocio.setFechaAprobacion(LocalDateTime.now());
         negocio.setMotivoRechazo(null);
         negocio.setActivo(true);
+
+        return negocioRepository.save(negocio);
+    }
+
+    public Negocio verificarCobros(Long id, boolean verificado) {
+
+        Negocio negocio = obtenerPorId(id);
+
+        if (verificado && negocio.getCobros().isEmpty()) {
+            throw ApiException.solicitudInvalida("Este puesto no tiene billeteras digitales que verificar");
+        }
+
+        negocio.setCobrosVerificados(verificado);
 
         return negocioRepository.save(negocio);
     }
@@ -343,6 +365,84 @@ public class NegocioService {
         negocio.setUbicacionEnVivo(false);
         negocio.setMotivoCierre(motivo);
         negocioRepository.save(negocio);
+    }
+
+    public CobrosRequest obtenerCobros(Usuario usuario) {
+        Negocio negocio = obtenerDelPropietario(usuario);
+        List<CobrosRequest.MetodoRequest> metodos = negocio.getCobros().stream()
+                .map(c -> new CobrosRequest.MetodoRequest(c.getCodigo(), c.getNumero()))
+                .toList();
+        return new CobrosRequest(metodos, negocio.getNombreCobro(), negocio.getAceptaEfectivo(), negocio.getCobrosVerificados());
+    }
+
+    public CobrosRequest guardarCobros(Usuario usuario, CobrosRequest cambios) {
+
+        if (cambios == null) {
+            throw ApiException.solicitudInvalida("No hay cambios que guardar");
+        }
+
+        Negocio negocio = obtenerDelPropietario(usuario);
+        aplicarCobros(negocio, cambios);
+        negocioRepository.save(negocio);
+
+        return obtenerCobros(usuario);
+    }
+
+    private void aplicarCobros(Negocio negocio, CobrosRequest cambios) {
+
+        Map<String, String> numeros = new java.util.LinkedHashMap<>();
+
+        if (cambios.metodos() != null) {
+            for (CobrosRequest.MetodoRequest metodo : cambios.metodos()) {
+                if (metodo == null || metodo.codigo() == null || !MetodosDigitales.NOMBRES.containsKey(metodo.codigo())) {
+                    throw ApiException.solicitudInvalida("Esa forma de pago no existe");
+                }
+                String numero = numeroCelular(metodo.numero(), MetodosDigitales.nombre(metodo.codigo()));
+                if (numero != null) {
+                    numeros.put(metodo.codigo(), numero);
+                }
+            }
+        }
+
+        String nombre = AuthService.texto(cambios.nombreCobro());
+        boolean efectivo = cambios.aceptaEfectivo() == null || cambios.aceptaEfectivo();
+
+        if (!numeros.isEmpty() && (nombre == null || nombre.length() < 2 || nombre.length() > 60)) {
+            throw ApiException.solicitudInvalida("Escribe tu nombre como sale en tu billetera digital");
+        }
+
+        if (numeros.isEmpty() && !efectivo) {
+            throw ApiException.solicitudInvalida("Acepta al menos una forma de pago");
+        }
+
+        Map<String, String> anteriores = new java.util.LinkedHashMap<>();
+        negocio.getCobros().forEach(c -> anteriores.put(c.getCodigo(), c.getNumero()));
+        boolean cambio = !anteriores.equals(numeros) || !java.util.Objects.equals(negocio.getNombreCobro(), nombre);
+
+        negocio.getCobros().clear();
+        numeros.forEach(negocio::agregarCobro);
+        if (cambio) {
+            negocio.setCobrosVerificados(false);
+        }
+        negocio.setNombreCobro(nombre);
+        negocio.setAceptaEfectivo(efectivo);
+    }
+
+    private static String numeroCelular(String valor, String nombre) {
+
+        String texto = AuthService.texto(valor);
+
+        if (texto == null) {
+            return null;
+        }
+
+        String digitos = texto.replaceAll("[\\s-]", "");
+
+        if (!digitos.matches("9\\d{8}")) {
+            throw ApiException.solicitudInvalida("El número de " + nombre + " debe tener 9 dígitos y empezar con 9");
+        }
+
+        return digitos;
     }
 
     public Negocio cambiarAperturaAutomatica(Usuario usuario, boolean activa) {

@@ -20,6 +20,7 @@ public class Vigilante {
     public void revisar() {
         pedidoService.vencerPendientes();
         pedidoService.vencerNoRecogidos();
+        pedidoService.vencerPagos();
         negocioService.aplicarHorarios();
         negocioService.cerrarSinConexion();
     }

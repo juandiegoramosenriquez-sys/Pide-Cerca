@@ -62,6 +62,7 @@ export default function NegocioArea() {
   const [recientes, setRecientes] = useState([])
   const [alerta, setAlerta] = useState(false)
   const conocidos = useRef(null)
+  const pagosAvisados = useRef(null)
   const avisosVistos = useRef(null)
   const [avisosSinLeer, setAvisosSinLeer] = useState(0)
   const [avisosVersion, setAvisosVersion] = useState(0)
@@ -178,6 +179,13 @@ export default function NegocioArea() {
           notificarSistema('PideCerca · ¡Nuevo pedido!', `Tienes ${llegaron.length} pedido(s) nuevo(s)`)
         }
       }
+      const avisados = datos.filter((p) => p.estado === 'ESPERANDO_PAGO' && p.pagoAvisado).map((p) => p.id)
+      if (pagosAvisados.current && avisados.some((id) => !pagosAvisados.current.has(id))) {
+        sonarAviso()
+        mostrar('Un cliente dice que ya pagó. Revisa tu billetera')
+        notificarSistema('PideCerca · Revisa tu pago', 'Un cliente dice que ya pagó su pedido')
+      }
+      pagosAvisados.current = new Set(avisados)
       conocidos.current = new Set(datos.map((p) => p.id))
       setPedidos(datos)
     } catch (e) {

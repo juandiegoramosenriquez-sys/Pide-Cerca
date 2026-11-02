@@ -4,6 +4,7 @@ import { Eye, EyeOff, Store } from 'lucide-react'
 import { inicioDe, useSesion } from '../../contexto/Sesion'
 import { useRolVisual } from '../../contexto/Tema'
 import { BotonTema } from '../../componentes/Marco'
+import CamposCobros, { COBROS_INICIAL, aSolicitud, errorCobros } from '../../componentes/CamposCobros'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import { BotonCarga, Error } from '../../componentes/Ui'
 import SelectorHorario, { HORARIO_INICIAL } from '../../componentes/SelectorHorario'
@@ -210,6 +211,7 @@ export function RegistroNegocio() {
   const { registrarNegocio } = useSesion()
   const navegar = useNavigate()
   const [dueno, setDueno] = useState({ nombre: '', apellido: '', correo: '', telefono: '', password: '' })
+  const [cobros, setCobros] = useState(COBROS_INICIAL)
   const [puesto, setPuesto] = useState({ nombre: '', tipoComida: '', direccion: '', ...HORARIO_INICIAL, horario: horarioTexto(HORARIO_INICIAL), latitud: '', longitud: '' })
   const [acepto, setAcepto] = useState(false)
   const [error, setError] = useState('')
@@ -224,12 +226,15 @@ export function RegistroNegocio() {
     if (!puesto.nombre.trim()) return setError('Escribe el nombre de tu puesto')
     if (horarioError(puesto)) return setError(horarioError(puesto))
     if (puesto.latitud === '' || puesto.longitud === '') return setError('Marca en el mapa dónde está tu puesto, así los clientes te encuentran')
+    if (!cobros.efectivo && !aSolicitud(cobros).metodos.length) return setError('Acepta al menos una forma de pago')
+    if (errorCobros(cobros)) return setError(errorCobros(cobros))
     if (!acepto) return setError('Debes aceptar el aviso de privacidad')
     setEnviando(true)
     try {
       await registrarNegocio({
         propietario: { ...dueno, correo: dueno.correo.trim(), aceptoPrivacidad: true },
-        negocio: { ...puesto, telefono: dueno.telefono, latitud: Number(puesto.latitud), longitud: Number(puesto.longitud) }
+        negocio: { ...puesto, telefono: dueno.telefono, latitud: Number(puesto.latitud), longitud: Number(puesto.longitud) },
+        cobros: aSolicitud(cobros)
       })
       navegar('/negocio', { replace: true })
     } catch (err) {
@@ -295,6 +300,9 @@ export function RegistroNegocio() {
             <label>Horario</label>
             <SelectorHorario valor={puesto} alCambiar={(h) => setPuesto((p) => ({ ...p, ...h }))} />
           </div>
+          <h2>¿Cómo te pagan?</h2>
+          <CamposCobros valor={cobros} alCambiar={setCobros} />
+
           <AvisoPrivacidad acepto={acepto} alCambiar={setAcepto} />
           <BotonCarga cargando={enviando}>Enviar solicitud</BotonCarga>
         </form>

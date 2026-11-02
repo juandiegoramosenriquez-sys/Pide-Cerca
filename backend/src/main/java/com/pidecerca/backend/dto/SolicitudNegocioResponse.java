@@ -18,7 +18,9 @@ public record SolicitudNegocioResponse(
         LocalDateTime fechaSolicitud,
         String propietarioNombre,
         String propietarioCorreo,
-        String propietarioTelefono) {
+        String propietarioTelefono,
+        Boolean conBilleteras,
+        Boolean cobrosVerificados) {
 
     public static SolicitudNegocioResponse de(Negocio negocio) {
         Usuario dueno = negocio.getPropietario();
@@ -36,7 +38,9 @@ public record SolicitudNegocioResponse(
                         dueno.getNombre() == null ? "" : dueno.getNombre(),
                         dueno.getApellido() == null ? "" : dueno.getApellido()).trim(),
                 dueno == null ? null : Privacidad.ocultarCorreo(dueno.getCorreo()),
-                dueno == null ? null : Privacidad.ocultarTelefono(dueno.getTelefono())
+                dueno == null ? null : Privacidad.ocultarTelefono(dueno.getTelefono()),
+                !negocio.getCobros().isEmpty(),
+                negocio.getCobrosVerificados()
         );
     }
 }
