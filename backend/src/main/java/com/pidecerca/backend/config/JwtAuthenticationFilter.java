@@ -1,5 +1,7 @@
 package com.pidecerca.backend.config;
 
+import com.pidecerca.backend.repository.UsuarioRepository;
+
 import com.pidecerca.backend.service.JwtService;
 import com.pidecerca.backend.service.UsuarioDetailsService;
 import jakarta.servlet.FilterChain;
@@ -21,13 +23,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UsuarioDetailsService usuarioDetailsService;
+    private final UsuarioRepository usuarioRepository;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
-            UsuarioDetailsService usuarioDetailsService) {
+            UsuarioDetailsService usuarioDetailsService,
+            UsuarioRepository usuarioRepository) {
 
         this.jwtService = jwtService;
         this.usuarioDetailsService = usuarioDetailsService;
+        this.usuarioRepository = usuarioRepository;
+    }
+
+    private boolean sesionCerrada(String correo, String token) {
+        return usuarioRepository.findByCorreoIgnoreCase(correo)
+                .map(u -> u.getSesionesDesde() != null
+                        && jwtService.obtenerEmision(token).toInstant()
+                                .isBefore(u.getSesionesDesde().atZone(java.time.ZoneId.systemDefault()).toInstant()))
+                .orElse(false);
     }
 
     @Override
@@ -61,7 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDetails userDetails =
                     usuarioDetailsService.loadUserByUsername(correo);
 
-            if (userDetails.isEnabled()) {
+            if (userDetails.isEnabled() && !sesionCerrada(correo, token)) {
 
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(

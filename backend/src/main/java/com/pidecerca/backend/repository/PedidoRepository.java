@@ -24,6 +24,10 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     List<Pedido> findByEstadoAndFechaBefore(EstadoPedido estado, java.time.LocalDateTime fecha);
 
+    List<Pedido> findByEstadoAndLimiteRecogerBefore(EstadoPedido estado, LocalDateTime limite);
+
+    List<Pedido> findByFechaAfter(LocalDateTime desde);
+
     long countByEstado(EstadoPedido estado);
 
     long countByFechaAfter(LocalDateTime fecha);
@@ -32,9 +36,9 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     boolean existsByUsuarioId(Long usuarioId);
 
-    @Query("select coalesce(sum(p.total), 0) from Pedido p where p.estado <> com.pidecerca.backend.entity.EstadoPedido.CANCELADO and p.fecha >= :desde")
+    @Query("select coalesce(sum(p.total), 0) from Pedido p where p.estado <> com.pidecerca.backend.entity.EstadoPedido.CANCELADO and not (p.estado = com.pidecerca.backend.entity.EstadoPedido.NO_RECOGIDO and exists (select 1 from Pago g where g.pedido = p and g.metodo = 'EFECTIVO')) and p.fecha >= :desde")
     Double sumarVentasDesde(@Param("desde") LocalDateTime desde);
 
-    @Query("select coalesce(sum(p.total), 0) from Pedido p where p.estado <> com.pidecerca.backend.entity.EstadoPedido.CANCELADO")
+    @Query("select coalesce(sum(p.total), 0) from Pedido p where p.estado <> com.pidecerca.backend.entity.EstadoPedido.CANCELADO and not (p.estado = com.pidecerca.backend.entity.EstadoPedido.NO_RECOGIDO and exists (select 1 from Pago g where g.pedido = p and g.metodo = 'EFECTIVO'))")
     Double sumarVentasTotales();
 }

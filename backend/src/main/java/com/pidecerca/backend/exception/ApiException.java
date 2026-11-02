@@ -27,6 +27,10 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.FORBIDDEN, mensaje);
     }
 
+    public static ApiException demasiadosIntentos(String mensaje) {
+        return new ApiException(HttpStatus.TOO_MANY_REQUESTS, mensaje);
+    }
+
     public static ApiException conflicto(String mensaje) {
         return new ApiException(HttpStatus.CONFLICT, mensaje);
     }

@@ -75,6 +75,11 @@ public class NegocioController {
                 usuarioActualService.obtener(), request.latitud(), request.longitud(), request.enVivo());
     }
 
+    @PutMapping("/mio/automatico")
+    public Negocio cambiarAutomatico(@RequestParam boolean valor) {
+        return negocioService.cambiarAperturaAutomatica(usuarioActualService.obtener(), valor);
+    }
+
     @PutMapping("/mio/abierto")
     public Negocio cambiarAbierto(@RequestParam boolean valor) {
         return negocioService.cambiarAbierto(usuarioActualService.obtener(), valor);

@@ -55,6 +55,15 @@ public class JwtService {
         return claims.getSubject();
     }
 
+    public Date obtenerEmision(String token) {
+        return Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getIssuedAt();
+    }
+
     public boolean esValido(String token) {
 
         try {

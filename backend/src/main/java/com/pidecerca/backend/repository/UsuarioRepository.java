@@ -19,4 +19,6 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     long countByRol(String rol);
 
     List<Usuario> findAllByOrderByIdDesc();
+
+    List<Usuario> findByRol(String rol);
 }

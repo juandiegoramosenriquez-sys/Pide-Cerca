@@ -11,6 +11,7 @@ import com.pidecerca.backend.entity.Pedido;
 import com.pidecerca.backend.entity.Rol;
 import com.pidecerca.backend.entity.Usuario;
 import com.pidecerca.backend.exception.ApiException;
+import com.pidecerca.backend.repository.CalificacionRepository;
 import com.pidecerca.backend.repository.NegocioRepository;
 import com.pidecerca.backend.repository.PedidoRepository;
 import com.pidecerca.backend.repository.ProductoRepository;
@@ -18,10 +19,17 @@ import com.pidecerca.backend.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 @Service
 public class NegocioService {
@@ -31,14 +39,19 @@ public class NegocioService {
     private final PedidoRepository pedidoRepository;
     private final ProductoRepository productoRepository;
     private final AuthService authService;
+    private final CalificacionRepository calificacionRepository;
+
+    private static final ZoneId ZONA = ZoneId.of("America/Lima");
 
     public NegocioService(
             NegocioRepository negocioRepository,
             UsuarioRepository usuarioRepository,
             PedidoRepository pedidoRepository,
             ProductoRepository productoRepository,
-            AuthService authService) {
+            AuthService authService,
+            CalificacionRepository calificacionRepository) {
 
+        this.calificacionRepository = calificacionRepository;
         this.negocioRepository = negocioRepository;
         this.usuarioRepository = usuarioRepository;
         this.pedidoRepository = pedidoRepository;
@@ -59,7 +72,7 @@ public class NegocioService {
         String filtro = normalizar(texto);
         String filtroTipo = normalizar(tipo);
 
-        List<Negocio> negocios = negocioRepository.findByActivoTrueAndEstadoAprobacion(EstadoAprobacion.APROBADO).stream()
+        List<Negocio> negocios = completar(negocioRepository.findByActivoTrueAndEstadoAprobacion(EstadoAprobacion.APROBADO)).stream()
                 .filter(n -> filtro == null
                         || contiene(n.getNombre(), filtro)
                         || contiene(n.getTipoComida(), filtro)
@@ -95,14 +108,33 @@ public class NegocioService {
     }
 
     public Negocio obtenerPorId(Long id) {
-        return negocioRepository.findById(id)
+        Negocio negocio = negocioRepository.findById(id)
                 .orElseThrow(() -> ApiException.noEncontrado("Negocio no encontrado"));
+        completar(List.of(negocio));
+        return negocio;
+    }
+
+    private List<Negocio> completar(List<Negocio> negocios) {
+        Map<Long, Object[]> resumen = new HashMap<>();
+        for (Object[] fila : calificacionRepository.resumenPorNegocio()) {
+            resumen.put((Long) fila[0], fila);
+        }
+        for (Negocio negocio : negocios) {
+            Object[] fila = resumen.get(negocio.getId());
+            if (fila != null) {
+                negocio.setPromedioCalificacion(Math.round(((Number) fila[1]).doubleValue() * 10.0) / 10.0);
+                negocio.setTotalCalificaciones(((Number) fila[2]).longValue());
+            }
+        }
+        return negocios;
     }
 
     public Negocio obtenerDelPropietario(Usuario usuario) {
-        return negocioRepository.findFirstByPropietarioId(usuario.getId())
+        Negocio negocio = negocioRepository.findFirstByPropietarioId(usuario.getId())
                 .orElseThrow(() -> ApiException.noEncontrado(
                         "Tu cuenta todavía no tiene un negocio asignado. Pídele al administrador que lo registre"));
+        completar(List.of(negocio));
+        return negocio;
     }
 
     @Transactional
@@ -288,6 +320,11 @@ public class NegocioService {
 
         negocio.setAbierto(abierto);
         negocio.setMotivoCierre(null);
+        negocio.setAbiertoPorHorario(false);
+
+        if (!abierto) {
+            negocio.setCerradoManualFecha(fechaDeVentana(negocio));
+        }
 
         if (abierto) {
             negocio.setUltimaConexion(LocalDateTime.now());
@@ -301,9 +338,99 @@ public class NegocioService {
 
     public void cerrarAutomatico(Negocio negocio, String motivo) {
         negocio.setAbierto(false);
+        negocio.setAbiertoPorHorario(false);
+        negocio.setCerradoManualFecha(fechaDeVentana(negocio));
         negocio.setUbicacionEnVivo(false);
         negocio.setMotivoCierre(motivo);
         negocioRepository.save(negocio);
+    }
+
+    public Negocio cambiarAperturaAutomatica(Usuario usuario, boolean activa) {
+
+        Negocio negocio = obtenerDelPropietario(usuario);
+
+        if (activa && (negocio.getHoraApertura() == null || negocio.getHoraCierre() == null
+                || negocio.getDiasAtencion() == null || !negocio.getDiasAtencion().contains("1"))) {
+            throw ApiException.solicitudInvalida("Primero configura los días y las horas de tu horario");
+        }
+
+        negocio.setAperturaAutomatica(activa);
+        return negocioRepository.save(negocio);
+    }
+
+    private LocalDate fechaDeVentana(Negocio negocio) {
+        LocalDate ventana = ventanaActual(negocio, ZonedDateTime.now(ZONA));
+        return ventana != null ? ventana : LocalDate.now(ZONA);
+    }
+
+    static LocalDate ventanaActual(Negocio negocio, ZonedDateTime ahora) {
+
+        String dias = negocio.getDiasAtencion();
+
+        if (dias == null || dias.length() < 7 || negocio.getHoraApertura() == null || negocio.getHoraCierre() == null) {
+            return null;
+        }
+
+        LocalTime apertura;
+        LocalTime cierre;
+
+        try {
+            apertura = LocalTime.parse(negocio.getHoraApertura());
+            cierre = LocalTime.parse(negocio.getHoraCierre());
+        } catch (Exception e) {
+            return null;
+        }
+
+        LocalDateTime instante = ahora.toLocalDateTime();
+
+        for (int atras = 0; atras <= 1; atras++) {
+            LocalDate dia = ahora.toLocalDate().minusDays(atras);
+            DayOfWeek semana = dia.getDayOfWeek();
+            if (dias.charAt(semana.getValue() - 1) != '1') {
+                continue;
+            }
+            LocalDateTime inicio = dia.atTime(apertura);
+            LocalDateTime fin = cierre.isAfter(apertura) ? dia.atTime(cierre) : dia.plusDays(1).atTime(cierre);
+            if (!instante.isBefore(inicio) && instante.isBefore(fin)) {
+                return dia;
+            }
+        }
+
+        return null;
+    }
+
+    @Transactional
+    public void aplicarHorarios() {
+
+        ZonedDateTime ahora = ZonedDateTime.now(ZONA);
+        LocalDateTime hace5 = LocalDateTime.now().minusMinutes(5);
+
+        for (Negocio negocio : negocioRepository.findByActivoTrueAndEstadoAprobacion(EstadoAprobacion.APROBADO)) {
+
+            if (!negocio.getAperturaAutomatica()) {
+                continue;
+            }
+
+            LocalDate ventana = ventanaActual(negocio, ahora);
+            boolean abierto = Boolean.TRUE.equals(negocio.getAbierto());
+
+            if (ventana != null && !abierto) {
+                boolean conectada = negocio.getUltimaConexion() != null && negocio.getUltimaConexion().isAfter(hace5);
+                if (conectada && !ventana.equals(negocio.getCerradoManualFecha())) {
+                    negocio.setAbierto(true);
+                    negocio.setAbiertoPorHorario(true);
+                    negocio.setMotivoCierre(null);
+                    negocio.setUltimaConexion(LocalDateTime.now());
+                    negocio.setPedidosSinResponder(0);
+                    negocioRepository.save(negocio);
+                }
+            } else if (ventana == null && abierto && negocio.getAbiertoPorHorario()) {
+                negocio.setAbierto(false);
+                negocio.setAbiertoPorHorario(false);
+                negocio.setUbicacionEnVivo(false);
+                negocioRepository.save(negocio);
+            }
+        }
     }
 
     @Transactional

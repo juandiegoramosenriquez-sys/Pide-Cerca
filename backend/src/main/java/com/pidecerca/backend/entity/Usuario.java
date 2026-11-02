@@ -37,6 +37,10 @@ public class Usuario {
 
     private LocalDateTime fechaCambioPassword;
 
+    private Integer faltas = 0;
+
+    private LocalDateTime sesionesDesde;
+
     public Usuario() {
     }
 
@@ -118,6 +122,22 @@ public class Usuario {
 
     public void setAceptoPrivacidad(Boolean aceptoPrivacidad) {
         this.aceptoPrivacidad = aceptoPrivacidad;
+    }
+
+    public int getFaltas() {
+        return faltas == null ? 0 : faltas;
+    }
+
+    public void setFaltas(int faltas) {
+        this.faltas = faltas;
+    }
+
+    public LocalDateTime getSesionesDesde() {
+        return sesionesDesde;
+    }
+
+    public void setSesionesDesde(LocalDateTime sesionesDesde) {
+        this.sesionesDesde = sesionesDesde;
     }
 
     public LocalDateTime getFechaCambioPassword() {

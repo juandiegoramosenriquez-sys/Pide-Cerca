@@ -1,5 +1,7 @@
 package com.pidecerca.backend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import com.pidecerca.backend.dto.LoginRequest;
 import com.pidecerca.backend.dto.LoginResponse;
 import com.pidecerca.backend.dto.RegistroNegocioRequest;
@@ -60,11 +62,12 @@ public class AuthController {
     }
 
     @PostMapping("/auth/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
+    public LoginResponse login(@RequestBody LoginRequest request, HttpServletRequest http) {
 
         String token = authService.login(
                 request.getCorreo(),
-                request.getPassword()
+                request.getPassword(),
+                http.getRemoteAddr()
         );
 
         Usuario usuario = authService.obtenerUsuario(request.getCorreo());

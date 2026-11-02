@@ -1,5 +1,10 @@
 package com.pidecerca.backend.service;
 
+import com.pidecerca.backend.entity.Ajustes;
+import com.pidecerca.backend.entity.IntentoLogin;
+import com.pidecerca.backend.repository.IntentoLoginRepository;
+import org.springframework.security.core.AuthenticationException;
+
 import com.pidecerca.backend.dto.RegistroRequest;
 import com.pidecerca.backend.entity.Rol;
 import com.pidecerca.backend.entity.Usuario;
@@ -19,13 +24,19 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final IntentoLoginRepository intentoLoginRepository;
+    private final AjustesService ajustesService;
 
     public AuthService(
             UsuarioRepository usuarioRepository,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
-            JwtService jwtService) {
+            JwtService jwtService,
+            IntentoLoginRepository intentoLoginRepository,
+            AjustesService ajustesService) {
 
+        this.intentoLoginRepository = intentoLoginRepository;
+        this.ajustesService = ajustesService;
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
@@ -83,6 +94,42 @@ public class AuthService {
         }
 
         return usuarioRepository.save(usuario);
+    }
+
+    public String login(String correo, String password, String ip) {
+
+        String normalizado = normalizarCorreo(correo);
+
+        if (normalizado != null) {
+            Ajustes ajustes = ajustesService.obtener();
+            long fallos = intentoLoginRepository.countByCorreoIgnoreCaseAndExitoFalseAndFechaAfter(
+                    normalizado, LocalDateTime.now().minusMinutes(ajustes.getMinutosBloqueoLogin()));
+            if (fallos >= ajustes.getIntentosLoginMaximos()) {
+                throw ApiException.demasiadosIntentos("Demasiados intentos. Espera "
+                        + ajustes.getMinutosBloqueoLogin() + " minutos e inténtalo otra vez");
+            }
+        }
+
+        try {
+            String token = login(correo, password);
+            registrarIntento(normalizado, ip, true);
+            return token;
+        } catch (AuthenticationException e) {
+            registrarIntento(normalizado, ip, false);
+            throw e;
+        }
+    }
+
+    private void registrarIntento(String correo, String ip, boolean exito) {
+        if (correo == null) {
+            return;
+        }
+        IntentoLogin intento = new IntentoLogin();
+        intento.setCorreo(correo);
+        intento.setIp(ip);
+        intento.setExito(exito);
+        intento.setFecha(LocalDateTime.now());
+        intentoLoginRepository.save(intento);
     }
 
     public String login(String correo, String password) {

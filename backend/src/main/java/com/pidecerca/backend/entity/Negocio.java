@@ -1,5 +1,7 @@
 package com.pidecerca.backend.entity;
 
+import java.time.LocalDate;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -87,6 +89,20 @@ public class Negocio {
     @Transient
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Double distanciaMetros;
+
+    @Transient
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Double promedioCalificacion;
+
+    @Transient
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private Long totalCalificaciones;
+
+    private Boolean aperturaAutomatica = false;
+
+    private Boolean abiertoPorHorario = false;
+
+    private LocalDate cerradoManualFecha;
 
     public Negocio() {
     }
@@ -314,6 +330,46 @@ public class Negocio {
 
     public void setPropietario(Usuario propietario) {
         this.propietario = propietario;
+    }
+
+    public Double getPromedioCalificacion() {
+        return promedioCalificacion;
+    }
+
+    public void setPromedioCalificacion(Double promedioCalificacion) {
+        this.promedioCalificacion = promedioCalificacion;
+    }
+
+    public Long getTotalCalificaciones() {
+        return totalCalificaciones;
+    }
+
+    public void setTotalCalificaciones(Long totalCalificaciones) {
+        this.totalCalificaciones = totalCalificaciones;
+    }
+
+    public Boolean getAperturaAutomatica() {
+        return Boolean.TRUE.equals(aperturaAutomatica);
+    }
+
+    public void setAperturaAutomatica(Boolean aperturaAutomatica) {
+        this.aperturaAutomatica = aperturaAutomatica;
+    }
+
+    public Boolean getAbiertoPorHorario() {
+        return Boolean.TRUE.equals(abiertoPorHorario);
+    }
+
+    public void setAbiertoPorHorario(Boolean abiertoPorHorario) {
+        this.abiertoPorHorario = abiertoPorHorario;
+    }
+
+    public LocalDate getCerradoManualFecha() {
+        return cerradoManualFecha;
+    }
+
+    public void setCerradoManualFecha(LocalDate cerradoManualFecha) {
+        this.cerradoManualFecha = cerradoManualFecha;
     }
 
     public Double getDistanciaMetros() {

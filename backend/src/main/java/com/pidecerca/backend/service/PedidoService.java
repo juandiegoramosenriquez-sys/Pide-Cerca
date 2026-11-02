@@ -8,6 +8,7 @@ import com.pidecerca.backend.repository.NegocioRepository;
 import com.pidecerca.backend.repository.PagoRepository;
 import com.pidecerca.backend.repository.PedidoRepository;
 import com.pidecerca.backend.repository.ProductoRepository;
+import com.pidecerca.backend.repository.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,6 @@ import java.util.Set;
 @Service
 public class PedidoService {
 
-    private static final double LIMITE_DISTANCIA_METROS = 5000;
 
     private static final Set<String> METODOS_PAGO = Set.of("YAPE", "PLIN", "TARJETA", "EFECTIVO");
 
@@ -40,6 +40,8 @@ public class PedidoService {
     private final NegocioService negocioService;
     private final NotificacionService notificacionService;
     private final UsuarioActualService usuarioActualService;
+    private final UsuarioRepository usuarioRepository;
+    private final AjustesService ajustesService;
 
     public PedidoService(
             PedidoRepository pedidoRepository,
@@ -48,8 +50,12 @@ public class PedidoService {
             NegocioRepository negocioRepository,
             NegocioService negocioService,
             NotificacionService notificacionService,
-            UsuarioActualService usuarioActualService) {
+            UsuarioActualService usuarioActualService,
+            UsuarioRepository usuarioRepository,
+            AjustesService ajustesService) {
 
+        this.usuarioRepository = usuarioRepository;
+        this.ajustesService = ajustesService;
         this.pedidoRepository = pedidoRepository;
         this.pagoRepository = pagoRepository;
         this.productoRepository = productoRepository;
@@ -105,6 +111,13 @@ public class PedidoService {
         throw ApiException.prohibido("No tienes acceso a este pedido");
     }
 
+    private static String textoDevolucion(Pedido pedido, boolean yaDevuelto) {
+        if (pedido.getPago() != null && "EFECTIVO".equals(pedido.getPago().getMetodo())) {
+            return "No se te cobró nada";
+        }
+        return yaDevuelto ? "Te devolvimos tu dinero" : "Te devolveremos tu dinero";
+    }
+
     @Transactional
     public Pedido crear(Usuario cliente, CrearPedidoRequest request) {
 
@@ -115,6 +128,8 @@ public class PedidoService {
         if (request.items() == null || request.items().isEmpty()) {
             throw ApiException.solicitudInvalida("Tu carrito está vacío");
         }
+
+        Ajustes ajustes = ajustesService.obtener();
 
         Negocio negocio = negocioRepository.findById(request.negocioId())
                 .orElseThrow(() -> ApiException.noEncontrado("Negocio no encontrado"));
@@ -130,8 +145,9 @@ public class PedidoService {
         if (request.latitud() != null && request.longitud() != null
                 && negocio.getLatitud() != null && negocio.getLongitud() != null
                 && NegocioService.distanciaMetros(request.latitud(), request.longitud(),
-                        negocio.getLatitud(), negocio.getLongitud()) > LIMITE_DISTANCIA_METROS) {
-            throw ApiException.solicitudInvalida("Este puesto está muy lejos de ti. Pide en uno a menos de 5 km");
+                        negocio.getLatitud(), negocio.getLongitud()) > ajustes.getDistanciaMaximaMetros()) {
+            throw ApiException.solicitudInvalida("Este puesto está muy lejos de ti. Pide en uno a menos de "
+                    + (ajustes.getDistanciaMaximaMetros() / 1000.0) + " km");
         }
 
         String metodo = request.metodoPago() == null
@@ -142,16 +158,28 @@ public class PedidoService {
             throw ApiException.solicitudInvalida("Método de pago no válido");
         }
 
+        if ("EFECTIVO".equals(metodo) && cliente.getFaltas() >= ajustes.getFaltasBloqueanEfectivo()) {
+            throw ApiException.solicitudInvalida("Con efectivo no puedes pedir porque no recogiste pedidos antes. Usa Yape, Plin o tarjeta");
+        }
+
         Map<Long, Integer> cantidades = new LinkedHashMap<>();
 
         for (ItemPedidoRequest item : request.items()) {
             if (item.productoId() == null) {
                 throw ApiException.solicitudInvalida("Hay un producto inválido en el carrito");
             }
-            if (item.cantidad() == null || item.cantidad() <= 0 || item.cantidad() > 50) {
-                throw ApiException.solicitudInvalida("La cantidad debe estar entre 1 y 50");
+            if (item.cantidad() == null || item.cantidad() <= 0 || item.cantidad() > ajustes.getMaxPorProducto()) {
+                throw ApiException.solicitudInvalida("La cantidad debe estar entre 1 y " + ajustes.getMaxPorProducto());
             }
             cantidades.merge(item.productoId(), item.cantidad(), Integer::sum);
+        }
+
+        if (cantidades.values().stream().anyMatch(cantidad -> cantidad > ajustes.getMaxPorProducto())) {
+            throw ApiException.solicitudInvalida("Máximo " + ajustes.getMaxPorProducto() + " unidades por producto");
+        }
+
+        if (cantidades.values().stream().mapToInt(Integer::intValue).sum() > ajustes.getMaxPorPedido()) {
+            throw ApiException.solicitudInvalida("Máximo " + ajustes.getMaxPorPedido() + " productos por pedido");
         }
 
         Pedido pedido = new Pedido();
@@ -271,6 +299,35 @@ public class PedidoService {
     }
 
     @Transactional
+    public void vencerNoRecogidos() {
+
+        int limite = ajustesService.obtener().getFaltasBloqueanEfectivo();
+
+        for (Pedido pedido : pedidoRepository.findByEstadoAndLimiteRecogerBefore(EstadoPedido.LISTO_PARA_RECOGER, LocalDateTime.now())) {
+
+            pedido.setEstado(EstadoPedido.NO_RECOGIDO);
+            Pedido guardado = pedidoRepository.save(pedido);
+
+            Usuario cliente = guardado.getUsuario();
+            int faltas = cliente.getFaltas() + 1;
+            cliente.setFaltas(faltas);
+            usuarioRepository.save(cliente);
+
+            boolean digital = guardado.getPago() != null && !"EFECTIVO".equals(guardado.getPago().getMetodo());
+            String aviso = faltas >= limite
+                    ? "Ya no puedes pagar en efectivo. Usa Yape, Plin o tarjeta."
+                    : "Si llegas a " + limite + " faltas, no podrás pagar en efectivo.";
+
+            notificacionService.crear(cliente, guardado, "Pedido no recogido",
+                    "No recogiste tu pedido #" + guardado.getId() + " a tiempo. Tienes " + faltas
+                            + (faltas == 1 ? " falta. " : " faltas. ") + aviso + (digital ? " El pago no se devuelve." : ""));
+
+            notificacionService.crear(guardado.getNegocio().getPropietario(), guardado, "Pedido no recogido",
+                    "El cliente no recogió el pedido #" + guardado.getId() + ". Puedes ofrecerlo a otro cliente.");
+        }
+    }
+
+    @Transactional
     public Pedido marcarListo(Usuario usuario, Long id) {
 
         Pedido pedido = obtenerParaNegocio(usuario, id);
@@ -281,6 +338,7 @@ public class PedidoService {
         }
 
         pedido.setEstado(EstadoPedido.LISTO_PARA_RECOGER);
+        pedido.setLimiteRecoger(LocalDateTime.now().plusMinutes(ajustesService.obtener().getMinutosParaRecoger()));
         pedido.setFechaListo(LocalDateTime.now());
 
         Pedido guardado = pedidoRepository.save(pedido);
@@ -304,7 +362,7 @@ public class PedidoService {
         Pedido pedido = obtenerParaNegocio(usuario, id);
         validarEstado(pedido, EstadoPedido.LISTO_PARA_RECOGER, "El pedido todavía no está listo");
 
-        if (pedido.getCodigo() != null && !pedido.getCodigo().equals(codigo == null ? null : codigo.trim())) {
+        if (pedido.codigoReal() != null && !pedido.codigoReal().equals(codigo == null ? null : codigo.trim())) {
             throw ApiException.solicitudInvalida("El código no coincide. Pídeselo otra vez al cliente");
         }
 
@@ -337,7 +395,7 @@ public class PedidoService {
         notificarCliente(guardado, "Pedido rechazado",
                 "El negocio no pudo atender tu pedido #" + guardado.getId()
                         + (razon == null ? "" : " (" + razon + ")")
-                        + ". Te devolveremos tu dinero");
+                        + ". " + textoDevolucion(guardado, false));
 
         return guardado;
     }
@@ -375,7 +433,7 @@ public class PedidoService {
 
         if (esAdmin) {
             notificarCliente(guardado, "Pedido cancelado",
-                    "Tu pedido #" + guardado.getId() + " fue cancelado. Te devolveremos tu dinero");
+                    "Tu pedido #" + guardado.getId() + " fue cancelado. " + textoDevolucion(guardado, false));
         }
 
         return guardado;
@@ -415,7 +473,7 @@ public class PedidoService {
             Pedido guardado = pedidoRepository.save(pedido);
 
             notificarCliente(guardado, "El puesto no respondió",
-                    "Tu pedido #" + guardado.getId() + " no fue aceptado a tiempo. Te devolvimos tu dinero");
+                    "Tu pedido #" + guardado.getId() + " no fue aceptado a tiempo. " + textoDevolucion(guardado, true));
 
             Negocio negocio = guardado.getNegocio();
             int sinResponder = (negocio.getPedidosSinResponder() == null ? 0 : negocio.getPedidosSinResponder()) + 1;

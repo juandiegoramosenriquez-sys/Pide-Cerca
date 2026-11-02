@@ -1,5 +1,11 @@
 package com.pidecerca.backend.entity;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
@@ -19,6 +25,7 @@ public class Pedido {
     private Double total;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     private EstadoPedido estado;
 
     private Integer tiempoPreparacion;
@@ -28,6 +35,8 @@ public class Pedido {
     private LocalDateTime fechaListo;
 
     private LocalDateTime fechaRecogido;
+
+    private LocalDateTime limiteRecoger;
 
     private String notas;
 
@@ -129,8 +138,27 @@ public class Pedido {
         return fecha.plusMinutes(Limites.MINUTOS_PARA_ACEPTAR);
     }
 
-    public String getCodigo() {
+    public LocalDateTime getLimiteRecoger() {
+        return limiteRecoger;
+    }
+
+    public void setLimiteRecoger(LocalDateTime limiteRecoger) {
+        this.limiteRecoger = limiteRecoger;
+    }
+
+    public String codigoReal() {
         return codigo;
+    }
+
+    public String getCodigo() {
+        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        if (autenticacion == null || usuario == null) {
+            return null;
+        }
+        boolean admin = autenticacion.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        boolean dueno = usuario.getCorreo() != null && usuario.getCorreo().equalsIgnoreCase(autenticacion.getName());
+        return admin || dueno ? codigo : null;
     }
 
     public void setCodigo(String codigo) {

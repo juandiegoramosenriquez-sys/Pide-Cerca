@@ -16,6 +16,7 @@ public class UsuarioResponse {
     private Boolean activo;
     private LocalDateTime fechaRegistro;
     private LocalDateTime proximoCambioPassword;
+    private int faltas;
 
     public UsuarioResponse() {
     }
@@ -52,11 +53,12 @@ public class UsuarioResponse {
                 usuario.getFechaRegistro()
         );
         r.proximoCambioPassword = Limites.proximoCambio(usuario.getFechaCambioPassword());
+        r.faltas = usuario.getFaltas();
         return r;
     }
 
     public static UsuarioResponse protegido(Usuario usuario) {
-        return new UsuarioResponse(
+        UsuarioResponse r = new UsuarioResponse(
                 usuario.getId(),
                 usuario.getNombre(),
                 usuario.getApellido(),
@@ -66,6 +68,12 @@ public class UsuarioResponse {
                 usuario.getActivo(),
                 usuario.getFechaRegistro()
         );
+        r.faltas = usuario.getFaltas();
+        return r;
+    }
+
+    public int getFaltas() {
+        return faltas;
     }
 
     public Long getId() {

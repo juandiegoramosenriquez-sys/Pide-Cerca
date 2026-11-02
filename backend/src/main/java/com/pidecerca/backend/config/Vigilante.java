@@ -19,6 +19,8 @@ public class Vigilante {
     @Scheduled(fixedDelay = 30000, initialDelay = 30000)
     public void revisar() {
         pedidoService.vencerPendientes();
+        pedidoService.vencerNoRecogidos();
+        negocioService.aplicarHorarios();
         negocioService.cerrarSinConexion();
     }
 }
