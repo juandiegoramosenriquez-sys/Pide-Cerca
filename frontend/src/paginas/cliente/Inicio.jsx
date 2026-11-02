@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Crosshair, List, Loader2, Map as IconoMapa, MapPin, Search, X } from 'lucide-react'
+import { Crosshair, Heart, List, Loader2, Map as IconoMapa, MapPin, Search, Star, X } from 'lucide-react'
 import { api } from '../../api'
 import { Foto } from '../../componentes/Foto'
 import Mapa, { buscarZona, pedirGps } from '../../componentes/Mapa'
 import { Cargando, Error, Modal, Vacio } from '../../componentes/Ui'
 import { distancia, iniciales } from '../../util/formato'
-import { LIMITE_METROS } from '../../util/ubicacion'
+import { useAjustes } from '../../util/ajustes'
+import { useCliente } from './Cliente'
 
 const CENTRO_LIMA = { lat: -12.0464, lng: -77.0428, nombre: 'Centro de Lima' }
 
@@ -35,6 +36,9 @@ function guardarPreferencia(clave, valor) {
 
 export default function Inicio() {
   const navegar = useNavigate()
+  const ajustes = useAjustes()
+  const { favoritos } = useCliente()
+  const [soloFavoritos, setSoloFavoritos] = useState(false)
   const [negocios, setNegocios] = useState(null)
   const [error, setError] = useState('')
   const [texto, setTexto] = useState('')
@@ -124,7 +128,7 @@ export default function Inicio() {
     return () => clearInterval(intervalo)
   }, [texto, punto, radio])
 
-  const visibles = [...(negocios || [])].sort((a, b) => Number(Boolean(b.abierto)) - Number(Boolean(a.abierto)))
+  const visibles = (negocios || []).filter((n) => !soloFavoritos || favoritos.includes(n.id)).sort((a, b) => Number(Boolean(b.abierto)) - Number(Boolean(a.abierto)))
   const esGps = punto.nombre === 'Mi ubicación'
   const abiertos = visibles.filter((n) => n.abierto)
   const cerrados = visibles.filter((n) => !n.abierto)
@@ -152,6 +156,15 @@ export default function Inicio() {
             <X size={20} />
           </button>
         )}
+        <button
+          type="button"
+          className={'boton-icono' + (soloFavoritos ? ' activo' : '')}
+          onClick={() => setSoloFavoritos(!soloFavoritos)}
+          aria-pressed={soloFavoritos}
+          aria-label="Solo mis favoritos"
+        >
+          <Heart size={20} fill={soloFavoritos ? 'currentColor' : 'none'} />
+        </button>
         <button
           type="button"
           className="boton-icono"
@@ -193,7 +206,7 @@ export default function Inicio() {
           ) : (
             <div className={'lista' + (grupo === 'cerrados' ? ' cerrados' : '')}>
               {lista.map((n) => (
-                <TarjetaPuesto key={n.id} negocio={n} lejos={esGps && n.distanciaMetros > LIMITE_METROS} alElegir={() => navegar(`/puesto/${n.id}`)} />
+                <TarjetaPuesto key={n.id} negocio={n} favorito={favoritos.includes(n.id)} lejos={esGps && n.distanciaMetros > ajustes.distanciaMaximaMetros} alElegir={() => navegar(`/puesto/${n.id}`)} />
               ))}
             </div>
           )}
@@ -257,14 +270,23 @@ export default function Inicio() {
   )
 }
 
-function TarjetaPuesto({ negocio: n, alElegir, lejos }) {
+function TarjetaPuesto({ negocio: n, alElegir, lejos, favorito }) {
   return (
     <button className="tarjeta tocable fila" style={{ gap: 14 }} onClick={alElegir}>
       <Foto src={n.imagen} tamano={60} texto={iniciales(n.nombre)} />
       <span style={{ flex: 1, minWidth: 0 }}>
-        <h3 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.nombre}</h3>
+        <h3 style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {favorito && <Heart size={14} fill="currentColor" style={{ marginRight: 6, verticalAlign: -1 }} />}
+          {n.nombre}
+        </h3>
         <span className="sub" style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {[n.tipoComida, n.tiempoEstimado ? `${n.tiempoEstimado} min` : null].filter(Boolean).join(' · ')}
+          {n.totalCalificaciones > 0 && (
+            <>
+              {' · '}
+              <Star size={12} fill="currentColor" style={{ verticalAlign: -1 }} /> {n.promedioCalificacion}
+            </>
+          )}
         </span>
         {n.ubicacionEnVivo && n.abierto ? (
           <span className="en-vivo">En vivo</span>

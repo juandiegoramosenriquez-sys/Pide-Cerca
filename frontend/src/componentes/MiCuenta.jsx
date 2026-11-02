@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Lock, LogOut, Monitor, Moon, Sun } from 'lucide-react'
 import { api } from '../api'
 import { useAviso } from '../contexto/Aviso'
@@ -117,6 +117,88 @@ export function ClaveCuenta() {
         </>
       )}
     </form>
+  )
+}
+
+const TIPOS_AYUDA = [
+  ['PEDIDO', 'Un pedido'],
+  ['PUESTO', 'Un puesto'],
+  ['PAGO', 'Un pago'],
+  ['APP', 'La app'],
+  ['OTRO', 'Otro']
+]
+
+export function AyudaCuenta() {
+  const mostrar = useAviso()
+  const [tipo, setTipo] = useState('PEDIDO')
+  const [mensaje, setMensaje] = useState('')
+  const [error, setError] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [lista, setLista] = useState(null)
+
+  const cargar = useCallback(() => {
+    api('/reclamos/mios')
+      .then(setLista)
+      .catch(() => setLista([]))
+  }, [])
+
+  useEffect(() => {
+    cargar()
+  }, [cargar])
+
+  async function enviar(e) {
+    e.preventDefault()
+    setError('')
+    setEnviando(true)
+    try {
+      await api('/reclamos', { metodo: 'POST', cuerpo: { tipo, mensaje } })
+      setMensaje('')
+      mostrar('Recibimos tu reclamo. Te responderemos por aquí')
+      cargar()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <>
+      <form className="tarjeta formulario" onSubmit={enviar}>
+        <h2>Reportar un problema</h2>
+        <Error>{error}</Error>
+        <div className="campo">
+          <label htmlFor="ayuda-tipo">Sobre qué</label>
+          <select id="ayuda-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+            {TIPOS_AYUDA.map(([clave, texto]) => (
+              <option key={clave} value={clave}>
+                {texto}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="campo">
+          <label htmlFor="ayuda-mensaje">Cuéntanos qué pasó</label>
+          <textarea id="ayuda-mensaje" maxLength={600} value={mensaje} onChange={(e) => setMensaje(e.target.value)} />
+        </div>
+        <BotonCarga cargando={enviando}>Enviar</BotonCarga>
+      </form>
+      {lista && lista.length > 0 && (
+        <section className="columna">
+          <h2>Tus reclamos</h2>
+          {lista.map((r) => (
+            <div key={r.id} className="tarjeta columna" style={{ gap: 4 }}>
+              <div className="fila entre">
+                <span className="mini">{fechaLarga(r.fecha)}</span>
+                <span className={'estado ' + (r.estado === 'ABIERTO' ? 'rec' : 'ok')}>{r.estado === 'ABIERTO' ? 'En revisión' : 'Resuelto'}</span>
+              </div>
+              <p>{r.mensaje}</p>
+              {r.respuesta && <p className="sub">Respuesta: {r.respuesta}</p>}
+            </div>
+          ))}
+        </section>
+      )}
+    </>
   )
 }
 

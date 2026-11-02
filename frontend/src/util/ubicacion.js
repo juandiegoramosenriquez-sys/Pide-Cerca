@@ -1,5 +1,4 @@
 export const AVISO_METROS = 3000
-export const LIMITE_METROS = 5000
 
 export function puntoGuardado() {
   try {

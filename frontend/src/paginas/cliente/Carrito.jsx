@@ -5,7 +5,7 @@ import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { BotonCarga, Error, Vacio } from '../../componentes/Ui'
 import { METODOS, distancia, soles } from '../../util/formato'
-import { AVISO_METROS, LIMITE_METROS, aPie, metrosAlPuesto, puntoGuardado } from '../../util/ubicacion'
+import { AVISO_METROS, aPie, metrosAlPuesto, puntoGuardado } from '../../util/ubicacion'
 import { useCliente } from './Cliente'
 
 function usePuesto(id) {
@@ -27,13 +27,13 @@ function usePuesto(id) {
   return datos
 }
 
-function AvisoLejos({ metros, muyLejos }) {
+function AvisoLejos({ metros, muyLejos, limite }) {
   return (
     <div className={'aviso columna ' + (muyLejos ? 'error' : 'alerta')} style={{ gap: 2, alignItems: 'flex-start' }}>
       <b>{muyLejos ? 'Este puesto está muy lejos' : `Este puesto está a ${distancia(metros)}`}</b>
       <span>
         {muyLejos
-          ? `Está a ${distancia(metros)}, unos ${aPie(metros)} a pie. Pide en un puesto a menos de ${distancia(LIMITE_METROS)}.`
+          ? `Está a ${distancia(metros)}, unos ${aPie(metros)} a pie. Pide en un puesto a menos de ${distancia(limite)}.`
           : `Son unos ${aPie(metros)} a pie. Revisa que te quede bien antes de pagar.`}
       </span>
     </div>
@@ -59,16 +59,28 @@ const OPCIONES_PAGO = [
 export default function Carrito() {
   const navegar = useNavigate()
   const mostrar = useAviso()
-  const { carrito, cantidad, total, cambiar, vaciar, setNotas, revisar } = useCliente()
+  const { carrito, cantidad, total, cambiar, vaciar, setNotas, revisar, ajustes } = useCliente()
+  const [faltas, setFaltas] = useState(0)
   const [paso, setPaso] = useState('carrito')
   const [metodo, setMetodo] = useState('YAPE')
   const [error, setError] = useState('')
   const [enviando, setEnviando] = useState(false)
   const { abierto, negocio: puesto } = usePuesto(carrito.negocio?.id)
   const metros = metrosAlPuesto(puesto || carrito.negocio)
-  const muyLejos = metros !== null && metros > LIMITE_METROS
+  const muyLejos = metros !== null && metros > ajustes.distanciaMaximaMetros
   const lejos = metros !== null && metros > AVISO_METROS && !muyLejos
   const puedePagar = abierto && !muyLejos
+  const efectivoBloqueado = faltas >= ajustes.faltasBloqueanEfectivo
+
+  useEffect(() => {
+    api('/auth/me')
+      .then((u) => setFaltas(u.faltas || 0))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (efectivoBloqueado && metodo === 'EFECTIVO') setMetodo('YAPE')
+  }, [efectivoBloqueado, metodo])
 
   if (!carrito.items.length) {
     return (
@@ -140,7 +152,8 @@ export default function Carrito() {
               aria-checked={metodo === o.clave}
               className="tarjeta tocable fila"
               style={{ gap: 14, borderWidth: metodo === o.clave ? 2 : 1, borderColor: metodo === o.clave ? 'var(--acento)' : undefined }}
-              onClick={() => setMetodo(o.clave)}
+              onClick={() => !(o.clave === 'EFECTIVO' && efectivoBloqueado) && setMetodo(o.clave)}
+              disabled={o.clave === 'EFECTIVO' && efectivoBloqueado}
             >
               <span
                 style={{
@@ -158,7 +171,7 @@ export default function Carrito() {
               </span>
               <span>
                 <h3>{METODOS[o.clave]}</h3>
-                <span className="mini">{o.detalle}</span>
+                <span className="mini">{o.clave === 'EFECTIVO' && efectivoBloqueado ? 'No disponible: no recogiste pedidos antes' : o.detalle}</span>
               </span>
             </button>
           ))}
@@ -166,7 +179,7 @@ export default function Carrito() {
         <div className="aviso info">Pago de prueba: no se cobra dinero real.</div>
         {resumen}
         {!abierto && <AvisoCerrado />}
-        {abierto && muyLejos && <AvisoLejos metros={metros} muyLejos />}
+        {abierto && muyLejos && <AvisoLejos metros={metros} muyLejos limite={ajustes.distanciaMaximaMetros} />}
         {puedePagar && <Error>{error}</Error>}
         {puedePagar ? (
           <BotonCarga cargando={enviando} onClick={pagar}>
@@ -197,7 +210,13 @@ export default function Carrito() {
             <div className="selector">
               <button onClick={() => cambiar(i.producto.id, -1)} aria-label={`Quitar un ${i.producto.nombre}`}>−</button>
               <span>{i.cantidad}</span>
-              <button onClick={() => cambiar(i.producto.id, 1)} aria-label={`Agregar un ${i.producto.nombre}`}>+</button>
+              <button
+                onClick={() => cambiar(i.producto.id, 1)}
+                disabled={i.cantidad >= ajustes.maxPorProducto || cantidad >= ajustes.maxPorPedido}
+                aria-label={`Agregar un ${i.producto.nombre}`}
+              >
+                +
+              </button>
             </div>
             <button className="boton-icono" onClick={() => cambiar(i.producto.id, -i.cantidad)} aria-label={`Quitar ${i.producto.nombre}`}>
               <Trash2 size={20} />
@@ -205,13 +224,14 @@ export default function Carrito() {
           </div>
         ))}
       </div>
+      <span className="mini">Máximo {ajustes.maxPorProducto} por producto y {ajustes.maxPorPedido} por pedido.</span>
       <div className="campo">
         <label htmlFor="notas">Nota para el puesto (opcional)</label>
         <textarea id="notas" placeholder="Sin cebolla, con harta crema…" value={carrito.notas} onChange={(e) => setNotas(e.target.value)} />
       </div>
       {resumen}
       {!abierto && <AvisoCerrado />}
-      {abierto && (muyLejos || lejos) && <AvisoLejos metros={metros} muyLejos={muyLejos} />}
+      {abierto && (muyLejos || lejos) && <AvisoLejos metros={metros} muyLejos={muyLejos} limite={ajustes.distanciaMaximaMetros} />}
       {puedePagar ? (
         <>
           <button className="boton principal ancho" onClick={() => setPaso('pago')}>

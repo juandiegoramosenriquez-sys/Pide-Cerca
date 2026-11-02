@@ -2,9 +2,9 @@ import { lazy, useState } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { inicioDe, useSesion } from './contexto/Sesion'
 import { Cargando } from './componentes/Ui'
-import { BotonSalir, ClaveCuenta, DatosCuenta, PantallaCuenta } from './componentes/MiCuenta'
+import { AyudaCuenta, BotonSalir, ClaveCuenta, DatosCuenta, PantallaCuenta } from './componentes/MiCuenta'
 import { iniciales } from './util/formato'
-import { Lock, Monitor, User } from 'lucide-react'
+import { LifeBuoy, Lock, Monitor, User } from 'lucide-react'
 
 const Ingresar = lazy(() => import('./paginas/acceso/Acceso').then((m) => ({ default: m.Ingresar })))
 const RegistroCliente = lazy(() => import('./paginas/acceso/Acceso').then((m) => ({ default: m.RegistroCliente })))
@@ -21,6 +21,8 @@ const PedidosNegocio = lazy(() => import('./paginas/negocio/Pedidos'))
 const MenuNegocio = lazy(() => import('./paginas/negocio/Menu'))
 const Ventas = lazy(() => import('./paginas/negocio/Ventas'))
 const MiPuesto = lazy(() => import('./paginas/negocio/MiPuesto'))
+const FichaCliente = lazy(() => import('./paginas/admin/Control').then((m) => ({ default: m.FichaCliente })))
+const Control = lazy(() => import('./paginas/admin/Control').then((m) => ({ default: m.Control })))
 const AdminArea = lazy(() => import('./paginas/admin/Admin'))
 const FichaPuesto = lazy(() => import('./paginas/admin/Admin').then((m) => ({ default: m.FichaPuesto })))
 const Puestos = lazy(() => import('./paginas/admin/Admin').then((m) => ({ default: m.Puestos })))
@@ -43,7 +45,8 @@ function SoloRol({ rol }) {
 const PESTANAS_PERFIL = [
   { clave: 'datos', texto: 'Datos', icono: User },
   { clave: 'clave', texto: 'Contraseña', icono: Lock },
-  { clave: 'pantalla', texto: 'Pantalla', icono: Monitor }
+  { clave: 'pantalla', texto: 'Pantalla', icono: Monitor },
+  { clave: 'ayuda', texto: 'Ayuda', icono: LifeBuoy }
 ]
 
 function PerfilCliente() {
@@ -75,6 +78,7 @@ function PerfilCliente() {
       {pestana === 'datos' && <DatosCuenta />}
       {pestana === 'clave' && <ClaveCuenta />}
       {pestana === 'pantalla' && <PantallaCuenta />}
+      {pestana === 'ayuda' && <AyudaCuenta />}
       <BotonSalir />
     </>
   )
@@ -98,6 +102,8 @@ export default function App() {
           <Route path="puestos" element={<Puestos />} />
           <Route path="puestos/:id" element={<FichaPuesto />} />
           <Route path="usuarios" element={<Usuarios />} />
+          <Route path="control" element={<Control />} />
+          <Route path="clientes/:id" element={<FichaCliente />} />
           <Route path="registro" element={<Registro />} />
         </Route>
       </Route>

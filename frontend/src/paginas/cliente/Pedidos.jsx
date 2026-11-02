@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import BarrasSemana from '../../componentes/BarrasSemana'
+import Calificar from '../../componentes/Calificar'
 import Cuenta from '../../componentes/Cuenta'
 import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
 import { METODOS, esActivo, fechaCorta, minutosRestantes, soles } from '../../util/formato'
@@ -15,11 +16,24 @@ function pasoDe(estado) {
   return { PENDIENTE: 0, ACEPTADO: 1, EN_PREPARACION: 1, LISTO_PARA_RECOGER: 2, RECOGIDO: 3 }[estado] ?? -1
 }
 
+function esEfectivo(pedido) {
+  return pedido.pago?.metodo === 'EFECTIVO'
+}
+
+function textoPago(pedido) {
+  if (esEfectivo(pedido)) {
+    if (pedido.estado === 'CANCELADO' || pedido.estado === 'NO_RECOGIDO') return 'Sin cobro'
+    return pedido.estado === 'RECOGIDO' ? 'Pagado al recoger' : 'Pagas al recoger'
+  }
+  return pedido.pago?.estado === 'REEMBOLSADO' ? 'Reembolsado' : 'Pagado'
+}
+
 function mensaje(pedido) {
   if (pedido.estado === 'PENDIENTE') return 'Esperando que el puesto acepte tu pedido'
   if (pedido.estado === 'LISTO_PARA_RECOGER') return '¡Listo! Acércate y di tu código'
   if (pedido.estado === 'RECOGIDO') return '¡Buen provecho! Gracias por usar PideCerca'
-  if (pedido.estado === 'CANCELADO') return pedido.motivoCancelacion ? `${pedido.motivoCancelacion}. Te devolvimos tu dinero` : 'Pedido cancelado'
+  if (pedido.estado === 'NO_RECOGIDO') return 'No recogiste tu pedido a tiempo'
+  if (pedido.estado === 'CANCELADO') return pedido.motivoCancelacion ? `${pedido.motivoCancelacion}. ${esEfectivo(pedido) ? 'No se te cobró nada' : 'Te devolvimos tu dinero'}` : 'Pedido cancelado'
   const faltan = minutosRestantes(pedido)
   if (faltan === null) return 'Tu pedido se está preparando'
   return faltan > 0 ? `Estará listo en unos ${faltan} min` : 'Ya casi está listo'
@@ -29,7 +43,7 @@ export function SeguimientoPedido() {
   const { id } = useParams()
   const navegar = useNavigate()
   const mostrar = useAviso()
-  const { version } = useCliente()
+  const { version, agregarVarios } = useCliente()
   const [pedido, setPedido] = useState(null)
   const [error, setError] = useState('')
   const [cancelando, setCancelando] = useState(false)
@@ -59,7 +73,7 @@ export function SeguimientoPedido() {
     setCancelando(false)
     try {
       setPedido(await api(`/pedidos/${id}/cancelar`, { metodo: 'POST' }))
-      mostrar('Pedido cancelado. Te devolveremos tu dinero')
+      mostrar(esEfectivo(pedido) ? 'Pedido cancelado. No se te cobró nada' : 'Pedido cancelado. Te devolveremos tu dinero')
     } catch (e) {
       setError(e.message)
     }
@@ -68,6 +82,11 @@ export function SeguimientoPedido() {
   if (!pedido) return error ? <Error>{error}</Error> : <Cargando />
 
   const paso = pasoDe(pedido.estado)
+
+  function volverAPedir() {
+    agregarVarios(pedido.negocio, (pedido.detalles || []).map((d) => ({ producto: d.producto, cantidad: d.cantidad })))
+    navegar('/carrito')
+  }
 
   return (
     <>
@@ -82,6 +101,7 @@ export function SeguimientoPedido() {
         <Estado estado={pedido.estado} />
         <p style={{ fontWeight: 700, marginTop: 4 }}>{mensaje(pedido)}</p>
         {pedido.estado === 'PENDIENTE' && <Cuenta limite={pedido.limiteAceptar} texto="Responde en" />}
+        {pedido.estado === 'LISTO_PARA_RECOGER' && <Cuenta limite={pedido.limiteRecoger} texto="Recógelo en" />}
         {pedido.codigo && esActivo(pedido.estado) && (
           <div className="codigo-entrega">
             <span>Código de entrega</span>
@@ -94,7 +114,7 @@ export function SeguimientoPedido() {
         )}
       </section>
 
-      {pedido.estado !== 'CANCELADO' && (
+      {!['CANCELADO', 'NO_RECOGIDO'].includes(pedido.estado) && (
         <div className="pasos" aria-label="Avance del pedido">
           {PASOS.map((texto, i) => (
             <div key={texto} className={'paso' + (i <= paso ? ' hecho' : '') + (i < paso ? ' sigue' : '')}>
@@ -124,13 +144,21 @@ export function SeguimientoPedido() {
         {pedido.notas && <p className="mini">Nota: {pedido.notas}</p>}
         <div className="fila entre">
           <span className="sub">
-            {METODOS[pedido.pago?.metodo] || 'Pago'} · {pedido.pago?.estado === 'REEMBOLSADO' ? 'Reembolsado' : 'Pagado'}
+            {METODOS[pedido.pago?.metodo] || 'Pago'} · {textoPago(pedido)}
           </span>
           <h2>{soles(pedido.total)}</h2>
         </div>
       </section>
 
+      {pedido.estado === 'RECOGIDO' && <Calificar pedidoId={pedido.id} />}
+
       <Error>{error}</Error>
+
+      {!esActivo(pedido.estado) && (
+        <button className="boton secundario ancho" onClick={volverAPedir}>
+          Volver a pedir
+        </button>
+      )}
 
       {pedido.estado === 'PENDIENTE' && (
         <button className="boton peligro ancho" onClick={() => setCancelando(true)}>
@@ -140,7 +168,7 @@ export function SeguimientoPedido() {
 
       {cancelando && (
         <Modal titulo="¿Cancelar tu pedido?" alCerrar={() => setCancelando(false)}>
-          <p className="sub">Solo puedes cancelar mientras el puesto no lo acepte. Te devolveremos tu dinero.</p>
+          <p className="sub">Solo puedes cancelar mientras el puesto no lo acepte. {esEfectivo(pedido) ? 'No se te cobrará nada.' : 'Te devolveremos tu dinero.'}</p>
           <div className="dos">
             <button className="boton secundario" onClick={() => setCancelando(false)}>
               No, mantener

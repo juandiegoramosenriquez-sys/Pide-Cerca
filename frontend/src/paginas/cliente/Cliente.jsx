@@ -7,6 +7,7 @@ import { useSesion } from '../../contexto/Sesion'
 import { Marco } from '../../componentes/Marco'
 import { notificarSistema, sonarAviso } from '../../util/sonido'
 import { soles } from '../../util/formato'
+import { useAjustes } from '../../util/ajustes'
 
 const ClienteContexto = createContext(null)
 
@@ -26,11 +27,13 @@ export function useCliente() {
 
 export default function ClienteArea() {
   const { usuario } = useSesion()
+  const ajustes = useAjustes()
   const mostrar = useAviso()
   const navegar = useNavigate()
   const ruta = useLocation().pathname
   const [carrito, setCarrito] = useState(leerCarrito)
   const [noLeidas, setNoLeidas] = useState(0)
+  const [favoritos, setFavoritos] = useState([])
   const [version, setVersion] = useState(0)
   const anterior = useRef(null)
 
@@ -72,20 +75,64 @@ export default function ClienteArea() {
   const total = carrito.items.reduce((s, i) => s + i.producto.precio * i.cantidad, 0)
 
   function agregar(negocio, producto, cuantos = 1) {
+    const mismo = carrito.negocio && carrito.negocio.id === negocio.id
+    const actual = mismo ? carrito.items.find((i) => i.producto.id === producto.id)?.cantidad || 0 : 0
+    const agregado = Math.max(0, Math.min(cuantos, ajustes.maxPorProducto - actual, ajustes.maxPorPedido - (mismo ? cantidad : 0)))
+    if (agregado === 0) return 0
     setCarrito((c) => {
-      const mismo = c.negocio && c.negocio.id === negocio.id
-      const items = mismo ? [...c.items] : []
-      const existente = items.find((i) => i.producto.id === producto.id)
-      if (existente) existente.cantidad = Math.min(50, existente.cantidad + cuantos)
-      else items.push({ producto, cantidad: cuantos })
-      return { negocio: { id: negocio.id, nombre: negocio.nombre }, items, notas: mismo ? c.notas : '' }
+      const igual = c.negocio && c.negocio.id === negocio.id
+      const items = igual ? [...c.items] : []
+      const posicion = items.findIndex((i) => i.producto.id === producto.id)
+      if (posicion >= 0) items[posicion] = { ...items[posicion], cantidad: items[posicion].cantidad + agregado }
+      else items.push({ producto, cantidad: agregado })
+      return { negocio: { id: negocio.id, nombre: negocio.nombre }, items, notas: igual ? c.notas : '' }
     })
+    return agregado
+  }
+
+  function agregarVarios(negocio, lineas) {
+    setCarrito((c) => {
+      const igual = c.negocio && c.negocio.id === negocio.id
+      const items = igual ? [...c.items] : []
+      let total = items.reduce((s, i) => s + i.cantidad, 0)
+      for (const { producto, cantidad: cuantas } of lineas) {
+        const posicion = items.findIndex((i) => i.producto.id === producto.id)
+        const actual = posicion >= 0 ? items[posicion].cantidad : 0
+        const sumar = Math.max(0, Math.min(cuantas, ajustes.maxPorProducto - actual, ajustes.maxPorPedido - total))
+        if (sumar === 0) continue
+        total += sumar
+        if (posicion >= 0) items[posicion] = { ...items[posicion], cantidad: actual + sumar }
+        else items.push({ producto, cantidad: sumar })
+      }
+      return { negocio: { id: negocio.id, nombre: negocio.nombre }, items, notas: igual ? c.notas : '' }
+    })
+  }
+
+  useEffect(() => {
+    api('/favoritos')
+      .then(setFavoritos)
+      .catch(() => {})
+  }, [])
+
+  async function alternarFavorito(negocioId) {
+    const es = favoritos.includes(negocioId)
+    try {
+      setFavoritos(await api(`/favoritos/${negocioId}`, { metodo: es ? 'DELETE' : 'PUT' }))
+      mostrar(es ? 'Quitado de tus favoritos' : 'Agregado a tus favoritos')
+    } catch (e) {
+      mostrar(e.message)
+    }
   }
 
   function cambiar(productoId, cambio) {
     setCarrito((c) => {
+      const libre = ajustes.maxPorPedido - c.items.reduce((s, i) => s + i.cantidad, 0)
       const items = c.items
-        .map((i) => (i.producto.id === productoId ? { ...i, cantidad: Math.min(50, i.cantidad + cambio) } : i))
+        .map((i) => {
+          if (i.producto.id !== productoId) return i
+          const nueva = i.cantidad + cambio
+          return { ...i, cantidad: cambio > 0 ? Math.min(nueva, ajustes.maxPorProducto, i.cantidad + Math.max(0, libre)) : nueva }
+        })
         .filter((i) => i.cantidad > 0)
       return items.length ? { ...c, items } : { negocio: null, items: [], notas: '' }
     })
@@ -109,7 +156,7 @@ export default function ClienteArea() {
   const verBarraCarrito = cantidad > 0 && (ruta === '/' || ruta.startsWith('/puesto'))
 
   return (
-    <ClienteContexto.Provider value={{ carrito, cantidad, total, agregar, cambiar, vaciar, setNotas, version, revisar }}>
+    <ClienteContexto.Provider value={{ carrito, cantidad, total, ajustes, favoritos, alternarFavorito, agregar, agregarVarios, cambiar, vaciar, setNotas, version, revisar }}>
       <Marco
         rol="cliente"
         enlaces={enlaces}

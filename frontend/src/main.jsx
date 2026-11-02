@@ -2,6 +2,7 @@ import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'
+import SinConexion from './componentes/SinConexion'
 import { Cargando } from './componentes/Ui'
 import { AvisoProveedor } from './contexto/Aviso'
 import { SesionProveedor } from './contexto/Sesion'
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')).render(
       <TemaProveedor>
         <AvisoProveedor>
           <SesionProveedor>
+            <SinConexion />
             <Suspense fallback={<Cargando />}>
               <App />
             </Suspense>

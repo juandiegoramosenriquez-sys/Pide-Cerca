@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CalendarClock, Clock, MapPin, Navigation, Plus, X } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Clock, Heart, MapPin, Navigation, Plus, Star, X } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { Foto } from '../../componentes/Foto'
@@ -9,14 +9,14 @@ import { urlImagen } from '../../util/imagen'
 import { Cargando, Error, Modal } from '../../componentes/Ui'
 import { distancia, haceCuanto, horarioTexto, iniciales, soles } from '../../util/formato'
 
-import { LIMITE_METROS, aPie, metrosAlPuesto, puntoGuardado } from '../../util/ubicacion'
+import { aPie, metrosAlPuesto, puntoGuardado } from '../../util/ubicacion'
 import { useCliente } from './Cliente'
 
 export default function Puesto() {
   const { id } = useParams()
   const navegar = useNavigate()
   const mostrar = useAviso()
-  const { carrito, agregar } = useCliente()
+  const { carrito, agregar, ajustes, favoritos, alternarFavorito } = useCliente()
   const [negocio, setNegocio] = useState(null)
   const [productos, setProductos] = useState([])
   const [error, setError] = useState('')
@@ -52,15 +52,15 @@ export default function Puesto() {
       setPendiente({ producto, cantidad })
       return
     }
-    agregar(negocio, producto, cantidad)
-    mostrar(`${cantidad} × ${producto.nombre} al carrito`)
+    const agregado = agregar(negocio, producto, cantidad)
+    mostrar(agregado ? `${agregado} × ${producto.nombre} al carrito` : `Máximo ${ajustes.maxPorProducto} por producto y ${ajustes.maxPorPedido} por pedido`)
   }
 
   if (error && !negocio) return <Error>{error}</Error>
   if (!negocio) return <Cargando />
 
   const metros = metrosAlPuesto(negocio)
-  const muyLejos = metros !== null && metros > LIMITE_METROS
+  const muyLejos = metros !== null && metros > ajustes.distanciaMaximaMetros
   const puedePedir = negocio.abierto && !muyLejos
   const fotoAvatar = urlImagen(negocio.imagen)
   const duena = negocio.propietario?.nombre
@@ -90,8 +90,24 @@ export default function Puesto() {
           <div style={{ minWidth: 0 }}>
             <h1>{negocio.nombre}</h1>
             <p style={{ opacity: 0.9 }}>{negocio.tipoComida}</p>
+            {negocio.totalCalificaciones > 0 && (
+              <p className="fila" style={{ gap: 4, opacity: 0.9, fontSize: 14 }}>
+                <Star size={14} fill="currentColor" />
+                {negocio.promedioCalificacion} ({negocio.totalCalificaciones})
+              </p>
+            )}
             {duena && <p style={{ opacity: 0.85, fontSize: 14 }}>Te atiende {duena}</p>}
           </div>
+          <button
+            type="button"
+            className="boton-icono"
+            style={{ marginLeft: 'auto' }}
+            onClick={() => alternarFavorito(negocio.id)}
+            aria-pressed={favoritos.includes(negocio.id)}
+            aria-label={favoritos.includes(negocio.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+          >
+            <Heart size={20} fill={favoritos.includes(negocio.id) ? 'currentColor' : 'none'} />
+          </button>
         </div>
         {negocio.descripcion && <p style={{ opacity: 0.9 }}>{negocio.descripcion}</p>}
         <div className="fila envolver" style={{ gap: 14, opacity: 0.92, fontSize: 15 }}>
@@ -119,7 +135,7 @@ export default function Puesto() {
       {!negocio.abierto && <div className="aviso alerta">Cerrado ahora. No recibe pedidos.</div>}
       {negocio.abierto && muyLejos && (
         <div className="aviso alerta">
-          Muy lejos para pedir: está a {distancia(metros)}, unos {aPie(metros)} a pie. Puedes ver el menú, pero pide en un puesto a menos de {distancia(LIMITE_METROS)}.
+          Muy lejos para pedir: está a {distancia(metros)}, unos {aPie(metros)} a pie. Puedes ver el menú, pero pide en un puesto a menos de {distancia(ajustes.distanciaMaximaMetros)}.
         </div>
       )}
 
@@ -195,7 +211,7 @@ export default function Puesto() {
               <div className="selector">
                 <button onClick={() => setCuantos(Math.max(1, cuantos - 1))} aria-label="Quitar uno">−</button>
                 <span>{cuantos}</span>
-                <button onClick={() => setCuantos(Math.min(50, cuantos + 1))} aria-label="Agregar uno">+</button>
+                <button onClick={() => setCuantos(Math.min(ajustes.maxPorProducto, cuantos + 1))} aria-label="Agregar uno">+</button>
               </div>
             )}
           </div>

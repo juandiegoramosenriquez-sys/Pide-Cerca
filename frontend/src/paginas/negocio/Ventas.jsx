@@ -1,8 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../api'
 import BarrasSemana from '../../componentes/BarrasSemana'
+import SelectorDia from '../../componentes/SelectorDia'
+import { enRango } from '../../util/dias'
 import { Cargando, Error, Estado } from '../../componentes/Ui'
 import { fechaCorta, nombreCorto, soles } from '../../util/formato'
+import { useNegocio } from './Negocio'
+
+function ingresa(p) {
+  return p.estado === 'RECOGIDO' || (p.estado === 'NO_RECOGIDO' && p.pago?.metodo !== 'EFECTIVO')
+}
+
+const VACIO = {
+  hoy: 'Hoy no hay pedidos terminados.',
+  ayer: 'Ayer no hubo pedidos terminados.',
+  antes: 'Todavía no hay pedidos terminados.'
+}
 
 function inicioDia(fecha) {
   return new Date(fecha.getFullYear(), fecha.getMonth(), fecha.getDate()).getTime()
@@ -11,6 +24,8 @@ function inicioDia(fecha) {
 export default function Ventas() {
   const [pedidos, setPedidos] = useState(null)
   const [error, setError] = useState('')
+  const [rango, setRango] = useState('hoy')
+  const { negocio } = useNegocio()
 
   useEffect(() => {
     api('/pedidos/negocio')
@@ -21,9 +36,9 @@ export default function Ventas() {
   const datos = useMemo(() => {
     if (!pedidos) return null
     const hoy = inicioDia(new Date())
-    const entregados = pedidos.filter((p) => p.estado === 'RECOGIDO')
+    const entregados = pedidos.filter((p) => ingresa(p))
     const deHoy = pedidos.filter((p) => new Date(p.fecha).getTime() >= hoy)
-    const ventasHoy = deHoy.filter((p) => p.estado === 'RECOGIDO').reduce((s, p) => s + p.total, 0)
+    const ventasHoy = deHoy.filter((p) => ingresa(p)).reduce((s, p) => s + p.total, 0)
     const conteo = {}
     entregados.forEach((p) =>
       p.detalles?.forEach((d) => {
@@ -36,19 +51,26 @@ export default function Ventas() {
       .slice(0, 5)
     return {
       ventasHoy,
-      pedidosHoy: deHoy.filter((p) => p.estado === 'RECOGIDO').length,
+      pedidosHoy: deHoy.filter((p) => ingresa(p)).length,
       canceladosHoy: deHoy.filter((p) => p.estado === 'CANCELADO').length,
       entregados,
       top,
-      ultimos: pedidos.filter((p) => ['RECOGIDO', 'CANCELADO'].includes(p.estado)).slice(0, 15)
+      terminados: pedidos.filter((p) => ['RECOGIDO', 'CANCELADO', 'NO_RECOGIDO'].includes(p.estado))
     }
   }, [pedidos])
 
   if (!datos) return error ? <Error>{error}</Error> : <Cargando />
 
+  const historial = datos.terminados.filter((p) => enRango(rango, p.fecha))
+
   return (
     <>
       <h1>Mis ventas</h1>
+      {negocio?.totalCalificaciones > 0 && (
+        <p className="sub">
+          Tus clientes te califican con ★ {negocio.promedioCalificacion} ({negocio.totalCalificaciones})
+        </p>
+      )}
       <section className="destacada columna" style={{ gap: 4 }}>
         <span style={{ fontWeight: 700, opacity: 0.9 }}>Vendiste hoy</span>
         <span className="numero-grande">{soles(datos.ventasHoy)}</span>
@@ -76,6 +98,7 @@ export default function Ventas() {
 
       <section className="columna">
         <h2>Historial</h2>
+        <SelectorDia rango={rango} alCambiar={setRango} contar={(clave) => datos.terminados.filter((p) => enRango(clave, p.fecha)).length} etiqueta="Historial por día" />
         <div className="tabla-caja">
           <table className="tabla">
             <thead>
@@ -88,7 +111,7 @@ export default function Ventas() {
               </tr>
             </thead>
             <tbody>
-              {datos.ultimos.map((p) => (
+              {historial.map((p) => (
                 <tr key={p.id}>
                   <td>
                     <b>#{p.id}</b>
@@ -101,10 +124,10 @@ export default function Ventas() {
                   </td>
                 </tr>
               ))}
-              {datos.ultimos.length === 0 && (
+              {historial.length === 0 && (
                 <tr>
                   <td colSpan={5} className="mini">
-                    Todavía no hay pedidos terminados.
+                    {VACIO[rango]}
                   </td>
                 </tr>
               )}

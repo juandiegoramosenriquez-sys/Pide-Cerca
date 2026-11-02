@@ -4,7 +4,8 @@ export const ESTADOS = {
   EN_PREPARACION: { texto: 'En proceso', clase: 'pro' },
   LISTO_PARA_RECOGER: { texto: 'Listo', clase: 'ok' },
   RECOGIDO: { texto: 'Entregado', clase: 'ent' },
-  CANCELADO: { texto: 'Cancelado', clase: 'can' }
+  CANCELADO: { texto: 'Cancelado', clase: 'can' },
+  NO_RECOGIDO: { texto: 'No recogido', clase: 'mal' }
 }
 
 export const METODOS = {

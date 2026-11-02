@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { Lock, MapPin, Store, User } from 'lucide-react'
+import { LifeBuoy, Lock, MapPin, Store, User } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { SubirFoto } from '../../componentes/Foto'
-import MiCuenta from '../../componentes/MiCuenta'
+import MiCuenta, { AyudaCuenta } from '../../componentes/MiCuenta'
 import SelectorUbicacion from '../../componentes/SelectorUbicacion'
 import SelectorHorario, { horarioDe } from '../../componentes/SelectorHorario'
 import { BotonCarga, Error, Interruptor } from '../../componentes/Ui'
@@ -14,7 +14,8 @@ import { useNegocio } from './Negocio'
 const PESTANAS = [
   { clave: 'puesto', texto: 'Puesto', icono: Store },
   { clave: 'ubicacion', texto: 'Ubicación', icono: MapPin },
-  { clave: 'cuenta', texto: 'Cuenta', icono: User }
+  { clave: 'cuenta', texto: 'Cuenta', icono: User },
+  { clave: 'ayuda', texto: 'Ayuda', icono: LifeBuoy }
 ]
 
 function datosDe(negocio) {
@@ -68,7 +69,8 @@ function useGuardarPuesto() {
 }
 
 function PestanaPuesto() {
-  const { negocio } = useNegocio()
+  const { negocio, setNegocio } = useNegocio()
+  const mostrar = useAviso()
   const [datos, setDatos] = useState(() => datosDe(negocio))
   const { guardar, guardando, error } = useGuardarPuesto()
   const cambiar = (c, v) => setDatos((d) => ({ ...d, [c]: v }))
@@ -118,6 +120,25 @@ function PestanaPuesto() {
         <div className="campo">
           <label>Horario</label>
           <SelectorHorario valor={datos} alCambiar={(h) => setDatos((d) => ({ ...d, ...h }))} />
+        </div>
+        <div className="fila entre">
+          <div>
+            <b>Abrir y cerrar solo</b>
+            <p className="mini">Se abre a tu hora si tienes la app abierta y se cierra al terminar. Si cierras tú antes, no se vuelve a abrir ese día.</p>
+          </div>
+          <Interruptor
+            encendido={Boolean(negocio.aperturaAutomatica)}
+            etiqueta="Abrir y cerrar solo con mi horario"
+            alCambiar={async () => {
+              try {
+                const n = await api('/negocios/mio/automatico', { metodo: 'PUT', consulta: { valor: !negocio.aperturaAutomatica } })
+                setNegocio(n)
+                mostrar(n.aperturaAutomatica ? 'Tu puesto se abrirá y cerrará solo' : 'Ahora abres y cierras tú')
+              } catch (e) {
+                mostrar(e.message)
+              }
+            }}
+          />
         </div>
         <div className="dos" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           <div className="campo">
@@ -216,6 +237,7 @@ export default function MiPuesto() {
       {pestana === 'puesto' && <PestanaPuesto />}
       {pestana === 'ubicacion' && <PestanaUbicacion />}
       {pestana === 'cuenta' && <MiCuenta />}
+      {pestana === 'ayuda' && <AyudaCuenta />}
     </>
   )
 }

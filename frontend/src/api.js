@@ -65,3 +65,20 @@ export async function api(ruta, { metodo = 'GET', cuerpo, consulta } = {}) {
   if (!respuesta.ok) throw new Error(datos?.mensaje || 'Algo salió mal. Inténtalo otra vez')
   return datos
 }
+
+export async function descargar(ruta, nombre) {
+  const url = new URL(API_URL + ruta)
+  const token = leerToken()
+  let respuesta
+  try {
+    respuesta = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  } catch {
+    throw new Error('No hay conexión con el servidor. Revisa tu internet')
+  }
+  if (!respuesta.ok) throw new Error('No se pudo descargar el reporte')
+  const enlace = document.createElement('a')
+  enlace.href = URL.createObjectURL(await respuesta.blob())
+  enlace.download = nombre
+  enlace.click()
+  URL.revokeObjectURL(enlace.href)
+}

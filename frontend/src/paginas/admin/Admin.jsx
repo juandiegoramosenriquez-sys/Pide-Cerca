@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { ArrowLeft, Check, ChevronRight, History, LayoutDashboard, LogOut, Settings, Store, Users, X } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, History, LayoutDashboard, LogOut, Settings, SlidersHorizontal, Store, Users, X } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { useSesion } from '../../contexto/Sesion'
@@ -8,6 +8,8 @@ import { Marco } from '../../componentes/Marco'
 import Mapa from '../../componentes/Mapa'
 import { PantallaCuenta } from '../../componentes/MiCuenta'
 import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
+import SelectorDia from '../../componentes/SelectorDia'
+import { enRango } from '../../util/dias'
 import { cuando, duracion, fechaCompleta, haceCuanto, horarioTexto, iniciales, soles } from '../../util/formato'
 
 export default function AdminArea() {
@@ -34,6 +36,7 @@ export default function AdminArea() {
     { ruta: '/admin', texto: 'Resumen', icono: LayoutDashboard, exacto: true },
     { ruta: '/admin/puestos', texto: 'Puestos', icono: Store, globo: pendientes },
     { ruta: '/admin/usuarios', texto: 'Usuarios', icono: Users },
+    { ruta: '/admin/control', texto: 'Control', icono: SlidersHorizontal },
     { ruta: '/admin/registro', texto: 'Registro', icono: History }
   ]
 
@@ -86,6 +89,7 @@ export function Resumen() {
   const [datos, setDatos] = useState(null)
   const [pedidos, setPedidos] = useState([])
   const [filtro, setFiltro] = useState('')
+  const [rango, setRango] = useState('antes')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -104,7 +108,7 @@ export function Resumen() {
   const valor = (clave) => (clave === 'EN_PREPARACION' ? enProceso : porEstado[clave] || 0)
   const total = Math.max(1, ESTADOS_ORDEN.reduce((s, [c]) => s + valor(c), 0))
   const grupoDe = (estado) => (estado === 'ACEPTADO' ? 'EN_PREPARACION' : estado)
-  const filtrados = pedidos.filter((p) => !filtro || grupoDe(p.estado) === filtro).slice(0, 15)
+  const filtrados = pedidos.filter((p) => enRango(rango, p.fecha) && (!filtro || grupoDe(p.estado) === filtro)).slice(0, 100)
   const colores = { PENDIENTE: 'var(--rec-solido)', EN_PREPARACION: 'var(--pro-solido)', LISTO_PARA_RECOGER: 'var(--ok-solido)', RECOGIDO: 'var(--ent)', CANCELADO: 'var(--t3)' }
 
   return (
@@ -150,6 +154,7 @@ export function Resumen() {
 
       <section className="columna">
         <h2>Últimos pedidos</h2>
+        <SelectorDia rango={rango} alCambiar={setRango} contar={(clave) => pedidos.filter((p) => enRango(clave, p.fecha)).length} etiqueta="Pedidos por día" />
         <div className="chips" role="group" aria-label="Filtrar pedidos por estado">
           <button type="button" className={'chip' + (!filtro ? ' activo' : '')} onClick={() => setFiltro('')}>
             Todos · {pedidos.length}
@@ -458,6 +463,7 @@ const ROLES = { CLIENTE: 'Cliente', NEGOCIO: 'Negocio', ADMIN: 'Administrador' }
 export function Usuarios() {
   const mostrar = useAviso()
   const { usuario: yo } = useSesion()
+  const navegar = useNavigate()
   const [lista, setLista] = useState(null)
   const [error, setError] = useState('')
   const [texto, setTexto] = useState('')
@@ -480,6 +486,25 @@ export function Usuarios() {
       await api(`/usuarios/${u.id}/activo`, { metodo: 'PUT', consulta: { valor: !u.activo } })
       mostrar(u.activo ? `${u.nombre} suspendido${u.rol === 'NEGOCIO' ? ' junto con su puesto' : ''}` : `${u.nombre} reactivado`)
       cargar()
+    } catch (e) {
+      mostrar(e.message)
+    }
+  }
+
+  async function perdonar(u) {
+    try {
+      await api(`/admin/usuarios/${u.id}/perdonar-faltas`, { metodo: 'PUT' })
+      mostrar(`Perdonaste las faltas de ${u.nombre}`)
+      cargar()
+    } catch (e) {
+      mostrar(e.message)
+    }
+  }
+
+  async function cerrarSesion(u) {
+    try {
+      await api(`/admin/usuarios/${u.id}/cerrar-sesion`, { metodo: 'PUT' })
+      mostrar(`Cerraste la sesión de ${u.nombre}`)
     } catch (e) {
       mostrar(e.message)
     }
@@ -518,6 +543,22 @@ export function Usuarios() {
             </div>
             <div className="fila-item-lado">
               {u.activo ? <span className="estado ok">Activo</span> : <span className="estado can">Suspendido</span>}
+              {u.faltas > 0 && <span className="estado mal">{u.faltas} {u.faltas === 1 ? 'falta' : 'faltas'}</span>}
+              {u.rol === 'CLIENTE' && (
+                <button className="boton chico secundario" onClick={() => navegar(`/admin/clientes/${u.id}`)}>
+                  Ver ficha
+                </button>
+              )}
+              {u.faltas > 0 && (
+                <button className="boton chico secundario" onClick={() => perdonar(u)}>
+                  Perdonar
+                </button>
+              )}
+              {u.id !== yo?.id && u.rol !== 'ADMIN' && (
+                <button className="boton chico secundario" onClick={() => cerrarSesion(u)}>
+                  Cerrar sesión
+                </button>
+              )}
               {u.id !== yo?.id && u.rol !== 'ADMIN' && (
                 <button className={'boton chico ' + (u.activo ? 'peligro' : 'secundario')} onClick={() => cambiarActivo(u)}>
                   {u.activo ? 'Suspender' : 'Reactivar'}
@@ -535,6 +576,7 @@ export function Usuarios() {
 export function Registro() {
   const [lista, setLista] = useState(null)
   const [error, setError] = useState('')
+  const [rango, setRango] = useState('hoy')
 
   useEffect(() => {
     api('/admin/registro')
@@ -547,9 +589,10 @@ export function Registro() {
   return (
     <>
       <h1>Registro de acciones</h1>
-      {lista.length === 0 && <Vacio>Todavía no hay acciones registradas.</Vacio>}
+      <SelectorDia rango={rango} alCambiar={setRango} contar={(clave) => lista.filter((r) => enRango(clave, r.fecha)).length} etiqueta="Acciones por día" />
+      {lista.filter((r) => enRango(rango, r.fecha)).length === 0 && <Vacio>No hay acciones en este periodo.</Vacio>}
       <div className="filas">
-        {lista.map((r) => (
+        {lista.filter((r) => enRango(rango, r.fecha)).map((r) => (
           <div key={r.id} className="fila-item">
             <div className="fila-item-texto">
               <span>{r.detalle}</span>

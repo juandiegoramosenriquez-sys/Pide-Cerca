@@ -106,7 +106,7 @@ function TarjetaPedido({ pedido, ahora }) {
         </div>
       )}
       <div className="fila entre">
-        <span className="sub">Pagado con {METODOS[pedido.pago?.metodo] || 'app'}</span>
+        <span className="sub">{pedido.pago?.metodo === 'EFECTIVO' ? 'Cobras en efectivo al entregar' : `Pagado con ${METODOS[pedido.pago?.metodo] || 'app'}`}</span>
         <h3>{soles(pedido.total)}</h3>
       </div>
 
@@ -154,6 +154,7 @@ function TarjetaPedido({ pedido, ahora }) {
 
       {grupo === 'ok' && (
         <>
+          <Cuenta limite={pedido.limiteRecoger} texto="Recoge en" />
           {pideCodigo ? (
             <div className="campo">
               <label htmlFor={`codigo-${pedido.id}`}>Código que te dice el cliente</label>
@@ -203,6 +204,45 @@ function TarjetaPedido({ pedido, ahora }) {
   )
 }
 
+function Agotados() {
+  const mostrar = useAviso()
+  const [productos, setProductos] = useState(null)
+
+  useEffect(() => {
+    api('/productos/mios')
+      .then(setProductos)
+      .catch(() => setProductos([]))
+  }, [])
+
+  async function alternar(producto) {
+    try {
+      const actualizado = await api(`/productos/${producto.id}/disponible`, { metodo: 'PUT', consulta: { valor: !producto.disponible } })
+      setProductos((lista) => lista.map((p) => (p.id === actualizado.id ? { ...p, disponible: actualizado.disponible } : p)))
+      mostrar(actualizado.disponible ? `${actualizado.nombre}: disponible otra vez` : `${actualizado.nombre}: agotado`)
+    } catch (e) {
+      mostrar(e.message)
+    }
+  }
+
+  if (!productos || productos.length === 0) return null
+
+  return (
+    <section className="tarjeta columna" style={{ gap: 8 }}>
+      <div className="fila entre">
+        <h2>¿Se acabó algo?</h2>
+        <span className="mini">Toca para agotar</span>
+      </div>
+      <div className="fila envolver" style={{ gap: 8 }}>
+        {productos.map((p) => (
+          <button key={p.id} type="button" className={'chip' + (p.disponible ? '' : ' agotado')} onClick={() => alternar(p)}>
+            {p.nombre}
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export default function PedidosNegocio() {
   const { negocio, pedidos, cargandoPedidos, setAlerta } = useNegocio()
   const [filtro, setFiltro] = useState('')
@@ -237,6 +277,8 @@ export default function PedidosNegocio() {
           </button>
         ))}
       </div>
+
+      <Agotados />
 
       {cargandoPedidos ? (
         <Cargando />

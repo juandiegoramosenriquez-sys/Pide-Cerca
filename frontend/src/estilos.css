@@ -689,6 +689,11 @@ p {
   color: var(--acento);
 }
 
+.selector button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .selector span {
   min-width: 28px;
   text-align: center;
@@ -2350,6 +2355,10 @@ body {
   color: var(--t2);
 }
 
+:root:not([data-tema='oscuro']) .destacada .estado {
+  background: rgba(255, 255, 255, 0.92);
+}
+
 .acceso-caja .centrado {
   text-align: center;
 }
@@ -2394,4 +2403,45 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.sin-conexion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 8px;
+  background: var(--t1);
+  color: var(--fondo);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.estrellas {
+  display: flex;
+  gap: 4px;
+  color: var(--rec-solido);
+}
+
+.estrellas button {
+  background: none;
+  border: 0;
+  padding: 2px;
+  color: inherit;
+}
+
+.chip.agotado {
+  text-decoration: line-through;
+  border-style: dashed;
+  opacity: 0.65;
+}
+
+.boton-icono.activo {
+  color: var(--acento);
+  border-color: var(--acento);
 }
