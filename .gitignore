@@ -12,3 +12,5 @@
 backend/data/
 *.log
 .claude/
+
+respaldos/
