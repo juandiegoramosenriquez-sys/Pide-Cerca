@@ -1,20 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../api'
 import BarrasSemana from '../../componentes/BarrasSemana'
-import SelectorDia from '../../componentes/SelectorDia'
-import { enRango } from '../../util/dias'
 import { Cargando, Error, Estado } from '../../componentes/Ui'
 import { fechaCorta, nombreCorto, soles } from '../../util/formato'
 import { useNegocio } from './Negocio'
 
 function ingresa(p) {
   return p.estado === 'RECOGIDO' || (p.estado === 'NO_RECOGIDO' && p.pago?.metodo !== 'EFECTIVO')
-}
-
-const VACIO = {
-  hoy: 'Hoy no hay pedidos terminados.',
-  ayer: 'Ayer no hubo pedidos terminados.',
-  antes: 'Todavía no hay pedidos terminados.'
 }
 
 function inicioDia(fecha) {
@@ -24,7 +16,7 @@ function inicioDia(fecha) {
 export default function Ventas() {
   const [pedidos, setPedidos] = useState(null)
   const [error, setError] = useState('')
-  const [rango, setRango] = useState('hoy')
+  const [cantidad, setCantidad] = useState(20)
   const { negocio } = useNegocio()
 
   useEffect(() => {
@@ -61,7 +53,7 @@ export default function Ventas() {
 
   if (!datos) return error ? <Error>{error}</Error> : <Cargando />
 
-  const historial = datos.terminados.filter((p) => enRango(rango, p.fecha))
+  const historial = datos.terminados.slice(0, cantidad)
 
   return (
     <>
@@ -98,7 +90,6 @@ export default function Ventas() {
 
       <section className="columna">
         <h2>Historial</h2>
-        <SelectorDia rango={rango} alCambiar={setRango} contar={(clave) => datos.terminados.filter((p) => enRango(clave, p.fecha)).length} etiqueta="Historial por día" />
         <div className="tabla-caja">
           <table className="tabla">
             <thead>
@@ -127,13 +118,18 @@ export default function Ventas() {
               {historial.length === 0 && (
                 <tr>
                   <td colSpan={5} className="mini">
-                    {VACIO[rango]}
+                    Todavía no hay pedidos terminados.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        {datos.terminados.length > cantidad && (
+          <button className="boton secundario ancho" onClick={() => setCantidad((c) => c + 20)}>
+            Ver más
+          </button>
+        )}
       </section>
     </>
   )

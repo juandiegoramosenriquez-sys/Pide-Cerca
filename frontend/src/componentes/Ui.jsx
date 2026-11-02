@@ -70,6 +70,22 @@ export function Interruptor({ encendido, alCambiar, etiqueta }) {
   )
 }
 
+export function Confirmar({ titulo, texto, textoConfirmar, peligro = true, alConfirmar, alCancelar }) {
+  return (
+    <Modal titulo={titulo} alCerrar={alCancelar}>
+      <p className="sub">{texto}</p>
+      <div className="dos">
+        <button className="boton secundario" onClick={alCancelar}>
+          Cancelar
+        </button>
+        <button className={'boton ' + (peligro ? 'peligro' : 'principal')} onClick={alConfirmar}>
+          {textoConfirmar}
+        </button>
+      </div>
+    </Modal>
+  )
+}
+
 export function BotonCarga({ cargando, children, className = 'boton principal ancho', ...resto }) {
   return (
     <button className={className} disabled={cargando} {...resto}>

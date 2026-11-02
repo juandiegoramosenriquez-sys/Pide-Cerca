@@ -20,6 +20,7 @@ const NegocioArea = lazy(() => import('./paginas/negocio/Negocio'))
 const PedidosNegocio = lazy(() => import('./paginas/negocio/Pedidos'))
 const MenuNegocio = lazy(() => import('./paginas/negocio/Menu'))
 const Ventas = lazy(() => import('./paginas/negocio/Ventas'))
+const AvisosNegocio = lazy(() => import('./paginas/negocio/Avisos'))
 const MiPuesto = lazy(() => import('./paginas/negocio/MiPuesto'))
 const FichaCliente = lazy(() => import('./paginas/admin/Control').then((m) => ({ default: m.FichaCliente })))
 const Control = lazy(() => import('./paginas/admin/Control').then((m) => ({ default: m.Control })))
@@ -113,6 +114,7 @@ export default function App() {
           <Route index element={<PedidosNegocio />} />
           <Route path="menu" element={<MenuNegocio />} />
           <Route path="ventas" element={<Ventas />} />
+          <Route path="avisos" element={<AvisosNegocio />} />
           <Route path="puesto" element={<MiPuesto />} />
         </Route>
       </Route>

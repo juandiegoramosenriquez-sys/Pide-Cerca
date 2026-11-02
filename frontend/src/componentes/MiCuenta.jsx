@@ -4,6 +4,8 @@ import { api } from '../api'
 import { useAviso } from '../contexto/Aviso'
 import { useSesion } from '../contexto/Sesion'
 import { useTema } from '../contexto/Tema'
+import { useAjustes } from '../util/ajustes'
+import { esDeHoy } from '../util/dias'
 import { fechaLarga } from '../util/formato'
 import { BotonCarga, Error } from './Ui'
 
@@ -130,6 +132,7 @@ const TIPOS_AYUDA = [
 
 export function AyudaCuenta() {
   const mostrar = useAviso()
+  const ajustes = useAjustes()
   const [tipo, setTipo] = useState('PEDIDO')
   const [mensaje, setMensaje] = useState('')
   const [error, setError] = useState('')
@@ -145,6 +148,9 @@ export function AyudaCuenta() {
   useEffect(() => {
     cargar()
   }, [cargar])
+
+  const permitidos = ajustes.reclamosPorDia || 1
+  const agotado = lista !== null && lista.filter((r) => esDeHoy(r.fecha)).length >= permitidos
 
   async function enviar(e) {
     e.preventDefault()
@@ -164,25 +170,37 @@ export function AyudaCuenta() {
 
   return (
     <>
-      <form className="tarjeta formulario" onSubmit={enviar}>
-        <h2>Reportar un problema</h2>
-        <Error>{error}</Error>
-        <div className="campo">
-          <label htmlFor="ayuda-tipo">Sobre qué</label>
-          <select id="ayuda-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
-            {TIPOS_AYUDA.map(([clave, texto]) => (
-              <option key={clave} value={clave}>
-                {texto}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="campo">
-          <label htmlFor="ayuda-mensaje">Cuéntanos qué pasó</label>
-          <textarea id="ayuda-mensaje" maxLength={600} value={mensaje} onChange={(e) => setMensaje(e.target.value)} />
-        </div>
-        <BotonCarga cargando={enviando}>Enviar</BotonCarga>
-      </form>
+      {agotado ? (
+        <section className="tarjeta columna">
+          <h2>Reportar un problema</h2>
+          <div className="aviso info">
+            Ya enviaste {permitidos === 1 ? 'tu reclamo' : `tus ${permitidos} reclamos`} de hoy. Podrás enviar otro mañana.
+          </div>
+        </section>
+      ) : (
+        <form className="tarjeta formulario" onSubmit={enviar}>
+          <h2>Reportar un problema</h2>
+          <span className="mini">
+            Puedes enviar {ajustes.reclamosPorDia || 1} {(ajustes.reclamosPorDia || 1) === 1 ? 'reclamo' : 'reclamos'} por día.
+          </span>
+          <Error>{error}</Error>
+          <div className="campo">
+            <label htmlFor="ayuda-tipo">Sobre qué</label>
+            <select id="ayuda-tipo" value={tipo} onChange={(e) => setTipo(e.target.value)}>
+              {TIPOS_AYUDA.map(([clave, texto]) => (
+                <option key={clave} value={clave}>
+                  {texto}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="campo">
+            <label htmlFor="ayuda-mensaje">Cuéntanos qué pasó</label>
+            <textarea id="ayuda-mensaje" maxLength={600} value={mensaje} onChange={(e) => setMensaje(e.target.value)} />
+          </div>
+          <BotonCarga cargando={enviando}>Enviar</BotonCarga>
+        </form>
+      )}
       {lista && lista.length > 0 && (
         <section className="columna">
           <h2>Tus reclamos</h2>

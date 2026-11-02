@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { ArrowLeft, Download, Send } from 'lucide-react'
 import { api, descargar } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
-import { BotonCarga, Cargando, Error, Estado, Vacio } from '../../componentes/Ui'
+import { BotonCarga, Cargando, Confirmar, Error, Estado, Vacio } from '../../componentes/Ui'
 import { fechaCompleta, iniciales, soles } from '../../util/formato'
 
 const SECCIONES = [
@@ -18,6 +18,7 @@ const SECCIONES = [
 ]
 
 export function Control() {
+  const { reclamosAbiertos = 0 } = useOutletContext() || {}
   const [seccion, setSeccion] = useState('puestos')
 
   return (
@@ -27,6 +28,7 @@ export function Control() {
         {SECCIONES.map(([clave, texto]) => (
           <button key={clave} type="button" role="tab" aria-selected={seccion === clave} className={'chip' + (seccion === clave ? ' activo' : '')} onClick={() => setSeccion(clave)}>
             {texto}
+            {clave === 'reclamos' && reclamosAbiertos > 0 && <span className="contador-chip">{reclamosAbiertos}</span>}
           </button>
         ))}
       </div>
@@ -155,6 +157,7 @@ function SeccionPuestos() {
 function SeccionClientes() {
   const mostrar = useAviso()
   const navegar = useNavigate()
+  const [pendiente, setPendiente] = useState(null)
   const { datos, error, cargar } = useCarga('/admin/clientes')
 
   async function perdonar(c) {
@@ -175,6 +178,12 @@ function SeccionClientes() {
     } catch (e) {
       mostrar(e.message)
     }
+  }
+
+  async function confirmar() {
+    const cliente = pendiente
+    setPendiente(null)
+    await cambiarActivo(cliente)
   }
 
   if (!datos) return error ? <Error>{error}</Error> : <Cargando />
@@ -202,13 +211,23 @@ function SeccionClientes() {
                   Perdonar
                 </button>
               )}
-              <button className={'boton chico ' + (c.activo ? 'peligro' : 'secundario')} onClick={() => cambiarActivo(c)}>
+              <button className={'boton chico ' + (c.activo ? 'peligro' : 'secundario')} onClick={() => setPendiente(c)}>
                 {c.activo ? 'Bloquear' : 'Desbloquear'}
               </button>
             </div>
           </div>
         ))}
       </div>
+      {pendiente && (
+        <Confirmar
+          titulo={pendiente.activo ? `¿Bloquear a ${pendiente.nombre}?` : `¿Desbloquear a ${pendiente.nombre}?`}
+          texto={pendiente.activo ? 'No podrá entrar a la app hasta que lo desbloquees.' : 'Podrá volver a entrar y hacer pedidos.'}
+          textoConfirmar={pendiente.activo ? 'Sí, bloquear' : 'Sí, desbloquear'}
+          peligro={pendiente.activo}
+          alConfirmar={confirmar}
+          alCancelar={() => setPendiente(null)}
+        />
+      )}
     </section>
   )
 }
@@ -259,6 +278,7 @@ function SeccionDinero() {
 
 function SeccionReclamos() {
   const mostrar = useAviso()
+  const { contar } = useOutletContext() || {}
   const { datos, error, cargar } = useCarga('/admin/reclamos')
   const [respuestas, setRespuestas] = useState({})
 
@@ -267,6 +287,7 @@ function SeccionReclamos() {
       await api(`/admin/reclamos/${r.id}/resolver`, { metodo: 'PUT', cuerpo: { motivo: respuestas[r.id] || '' } })
       mostrar('Reclamo resuelto')
       cargar()
+      contar?.()
     } catch (e) {
       mostrar(e.message)
     }
@@ -333,10 +354,27 @@ function SeccionComunicados() {
   const [titulo, setTitulo] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [confirmando, setConfirmando] = useState(false)
   const [error, setError] = useState('')
 
-  async function enviar(e) {
+  const nombrePuesto = (puestos || []).find((p) => String(p.id) === String(negocioId))?.nombre
+  const paraQuien = {
+    CLIENTES: 'todos los clientes',
+    NEGOCIOS: 'todas las tías',
+    TODOS: 'todos, clientes y tías',
+    PUESTO: nombrePuesto ? `el puesto ${nombrePuesto}` : 'un puesto'
+  }[destino]
+
+  function pedirConfirmacion(e) {
     e.preventDefault()
+    setError('')
+    if (destino === 'PUESTO' && !negocioId) return setError('Elige a qué puesto se lo mandas')
+    if (!titulo.trim() || !mensaje.trim()) return setError('Escribe el título y el mensaje')
+    setConfirmando(true)
+  }
+
+  async function enviar() {
+    setConfirmando(false)
     setError('')
     setEnviando(true)
     try {
@@ -354,7 +392,7 @@ function SeccionComunicados() {
 
   return (
     <>
-      <form className="tarjeta formulario" onSubmit={enviar}>
+      <form className="tarjeta formulario" onSubmit={pedirConfirmacion}>
         <h2>Mandar un aviso</h2>
         <Error>{error}</Error>
         <div className="campo">
@@ -392,6 +430,16 @@ function SeccionComunicados() {
           Enviar aviso
         </BotonCarga>
       </form>
+      {confirmando && (
+        <Confirmar
+          titulo="¿Enviar este aviso?"
+          texto={`Se lo vas a mandar a ${paraQuien}: “${titulo.trim()}”. Una vez enviado no se puede deshacer.`}
+          textoConfirmar="Sí, enviar"
+          peligro={false}
+          alConfirmar={enviar}
+          alCancelar={() => setConfirmando(false)}
+        />
+      )}
       <section className="columna">
         <h2>Enviados</h2>
         {!datos ? (
@@ -424,7 +472,8 @@ const CAMPOS_REGLAS = [
   ['maxPorProducto', 'Máximo por producto', 'unidades', 1, 50],
   ['maxPorPedido', 'Máximo por pedido', 'productos', 1, 100],
   ['intentosLoginMaximos', 'Intentos de ingreso antes de bloquear', 'intentos', 3, 20],
-  ['minutosBloqueoLogin', 'Minutos de bloqueo por intentos', 'min', 1, 120]
+  ['minutosBloqueoLogin', 'Minutos de bloqueo por intentos', 'min', 1, 120],
+  ['reclamosPorDia', 'Reclamos que puede enviar cada persona por día', 'reclamos', 1, 10]
 ]
 
 function SeccionReglas() {
@@ -453,7 +502,8 @@ function SeccionReglas() {
           maxPorProducto: Number(valores.maxPorProducto),
           maxPorPedido: Number(valores.maxPorPedido),
           intentosLoginMaximos: Number(valores.intentosLoginMaximos),
-          minutosBloqueoLogin: Number(valores.minutosBloqueoLogin)
+          minutosBloqueoLogin: Number(valores.minutosBloqueoLogin),
+          reclamosPorDia: Number(valores.reclamosPorDia)
         }
       })
       mostrar('Reglas guardadas')

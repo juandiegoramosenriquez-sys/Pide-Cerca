@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, ChevronRight, History, LayoutDashboard, LogOut, Settings, SlidersHorizontal, Store, Users, X } from 'lucide-react'
 import { api } from '../../api'
@@ -7,24 +7,39 @@ import { useSesion } from '../../contexto/Sesion'
 import { Marco } from '../../componentes/Marco'
 import Mapa from '../../componentes/Mapa'
 import { PantallaCuenta } from '../../componentes/MiCuenta'
-import { Cargando, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
-import SelectorDia from '../../componentes/SelectorDia'
-import { enRango } from '../../util/dias'
+import { Cargando, Confirmar, Error, Estado, Modal, Vacio } from '../../componentes/Ui'
+import { sonarAviso } from '../../util/sonido'
 import { cuando, duracion, fechaCompleta, haceCuanto, horarioTexto, iniciales, soles } from '../../util/formato'
 
 export default function AdminArea() {
   const { usuario, salir } = useSesion()
+  const mostrar = useAviso()
   const [pendientes, setPendientes] = useState(0)
+  const [reclamos, setReclamos] = useState(0)
   const [ajustes, setAjustes] = useState(false)
+  const anterior = useRef(null)
 
   const contar = useCallback(async () => {
     try {
       const r = await api('/admin/resumen')
-      setPendientes(r.solicitudesPendientes || 0)
+      const solicitudes = r.solicitudesPendientes || 0
+      const abiertos = r.reclamosAbiertos || 0
+      if (anterior.current) {
+        if (abiertos > anterior.current.reclamos) {
+          sonarAviso()
+          mostrar('Llegó un reclamo nuevo')
+        } else if (solicitudes > anterior.current.solicitudes) {
+          sonarAviso()
+          mostrar('Hay un puesto nuevo esperando tu aprobación')
+        }
+      }
+      anterior.current = { reclamos: abiertos, solicitudes }
+      setPendientes(solicitudes)
+      setReclamos(abiertos)
     } catch {
       return
     }
-  }, [])
+  }, [mostrar])
 
   useEffect(() => {
     contar()
@@ -36,7 +51,7 @@ export default function AdminArea() {
     { ruta: '/admin', texto: 'Resumen', icono: LayoutDashboard, exacto: true },
     { ruta: '/admin/puestos', texto: 'Puestos', icono: Store, globo: pendientes },
     { ruta: '/admin/usuarios', texto: 'Usuarios', icono: Users },
-    { ruta: '/admin/control', texto: 'Control', icono: SlidersHorizontal },
+    { ruta: '/admin/control', texto: 'Control', icono: SlidersHorizontal, globo: reclamos },
     { ruta: '/admin/registro', texto: 'Registro', icono: History }
   ]
 
@@ -46,7 +61,7 @@ export default function AdminArea() {
       enlaces={enlaces}
       titulo="PideCerca · Admin"
       sub={`${usuario?.nombre || ''} ${usuario?.apellido || ''}`.trim()}
-      contexto={{ contar }}
+      contexto={{ contar, reclamosAbiertos: reclamos }}
       derecha={
         <>
           <button className="barra-boton" onClick={() => setAjustes(true)} aria-label="Ajustes">
@@ -89,7 +104,6 @@ export function Resumen() {
   const [datos, setDatos] = useState(null)
   const [pedidos, setPedidos] = useState([])
   const [filtro, setFiltro] = useState('')
-  const [rango, setRango] = useState('antes')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -108,7 +122,7 @@ export function Resumen() {
   const valor = (clave) => (clave === 'EN_PREPARACION' ? enProceso : porEstado[clave] || 0)
   const total = Math.max(1, ESTADOS_ORDEN.reduce((s, [c]) => s + valor(c), 0))
   const grupoDe = (estado) => (estado === 'ACEPTADO' ? 'EN_PREPARACION' : estado)
-  const filtrados = pedidos.filter((p) => enRango(rango, p.fecha) && (!filtro || grupoDe(p.estado) === filtro)).slice(0, 100)
+  const filtrados = pedidos.filter((p) => !filtro || grupoDe(p.estado) === filtro).slice(0, 15)
   const colores = { PENDIENTE: 'var(--rec-solido)', EN_PREPARACION: 'var(--pro-solido)', LISTO_PARA_RECOGER: 'var(--ok-solido)', RECOGIDO: 'var(--ent)', CANCELADO: 'var(--t3)' }
 
   return (
@@ -154,7 +168,6 @@ export function Resumen() {
 
       <section className="columna">
         <h2>Últimos pedidos</h2>
-        <SelectorDia rango={rango} alCambiar={setRango} contar={(clave) => pedidos.filter((p) => enRango(clave, p.fecha)).length} etiqueta="Pedidos por día" />
         <div className="chips" role="group" aria-label="Filtrar pedidos por estado">
           <button type="button" className={'chip' + (!filtro ? ' activo' : '')} onClick={() => setFiltro('')}>
             Todos · {pedidos.length}
@@ -468,6 +481,7 @@ export function Usuarios() {
   const [error, setError] = useState('')
   const [texto, setTexto] = useState('')
   const [rol, setRol] = useState('')
+  const [pendiente, setPendiente] = useState(null)
 
   const cargar = useCallback(async () => {
     try {
@@ -489,6 +503,13 @@ export function Usuarios() {
     } catch (e) {
       mostrar(e.message)
     }
+  }
+
+  async function confirmar() {
+    const { tipo, u } = pendiente
+    setPendiente(null)
+    if (tipo === 'sesion') await cerrarSesion(u)
+    else await cambiarActivo(u)
   }
 
   async function perdonar(u) {
@@ -555,12 +576,12 @@ export function Usuarios() {
                 </button>
               )}
               {u.id !== yo?.id && u.rol !== 'ADMIN' && (
-                <button className="boton chico secundario" onClick={() => cerrarSesion(u)}>
+                <button className="boton chico secundario" onClick={() => setPendiente({ tipo: 'sesion', u })}>
                   Cerrar sesión
                 </button>
               )}
               {u.id !== yo?.id && u.rol !== 'ADMIN' && (
-                <button className={'boton chico ' + (u.activo ? 'peligro' : 'secundario')} onClick={() => cambiarActivo(u)}>
+                <button className={'boton chico ' + (u.activo ? 'peligro' : 'secundario')} onClick={() => setPendiente({ tipo: 'activo', u })}>
                   {u.activo ? 'Suspender' : 'Reactivar'}
                 </button>
               )}
@@ -569,6 +590,28 @@ export function Usuarios() {
         ))}
         {visibles.length === 0 && <p className="mini fila-item">Nadie con ese nombre.</p>}
       </div>
+      {pendiente && (
+        <Confirmar
+          titulo={
+            pendiente.tipo === 'sesion'
+              ? `¿Cerrar la sesión de ${pendiente.u.nombre}?`
+              : pendiente.u.activo
+                ? `¿Suspender a ${pendiente.u.nombre}?`
+                : `¿Reactivar a ${pendiente.u.nombre}?`
+          }
+          texto={
+            pendiente.tipo === 'sesion'
+              ? 'Tendrá que volver a iniciar sesión.'
+              : pendiente.u.activo
+                ? `No podrá entrar a la app${pendiente.u.rol === 'NEGOCIO' ? ' y su puesto también se suspende' : ''}.`
+                : `Podrá volver a entrar${pendiente.u.rol === 'NEGOCIO' ? ' y su puesto se reactiva' : ''}.`
+          }
+          textoConfirmar={pendiente.tipo === 'sesion' ? 'Sí, cerrar sesión' : pendiente.u.activo ? 'Sí, suspender' : 'Sí, reactivar'}
+          peligro={pendiente.tipo === 'sesion' || pendiente.u.activo}
+          alConfirmar={confirmar}
+          alCancelar={() => setPendiente(null)}
+        />
+      )}
     </>
   )
 }
@@ -576,7 +619,6 @@ export function Usuarios() {
 export function Registro() {
   const [lista, setLista] = useState(null)
   const [error, setError] = useState('')
-  const [rango, setRango] = useState('hoy')
 
   useEffect(() => {
     api('/admin/registro')
@@ -589,10 +631,9 @@ export function Registro() {
   return (
     <>
       <h1>Registro de acciones</h1>
-      <SelectorDia rango={rango} alCambiar={setRango} contar={(clave) => lista.filter((r) => enRango(clave, r.fecha)).length} etiqueta="Acciones por día" />
-      {lista.filter((r) => enRango(rango, r.fecha)).length === 0 && <Vacio>No hay acciones en este periodo.</Vacio>}
+      {lista.length === 0 && <Vacio>Todavía no hay acciones registradas.</Vacio>}
       <div className="filas">
-        {lista.filter((r) => enRango(rango, r.fecha)).map((r) => (
+        {lista.map((r) => (
           <div key={r.id} className="fila-item">
             <div className="fila-item-texto">
               <span>{r.detalle}</span>

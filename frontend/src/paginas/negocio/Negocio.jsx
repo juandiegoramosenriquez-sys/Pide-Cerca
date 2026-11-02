@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BarChart3, BellRing, ClipboardList, Clock, LogOut, Store, UtensilsCrossed } from 'lucide-react'
+import { BarChart3, Bell, BellRing, ClipboardList, Clock, LogOut, Store, UtensilsCrossed } from 'lucide-react'
 import { api } from '../../api'
 import { useAviso } from '../../contexto/Aviso'
 import { useSesion } from '../../contexto/Sesion'
@@ -62,6 +62,9 @@ export default function NegocioArea() {
   const [recientes, setRecientes] = useState([])
   const [alerta, setAlerta] = useState(false)
   const conocidos = useRef(null)
+  const avisosVistos = useRef(null)
+  const [avisosSinLeer, setAvisosSinLeer] = useState(0)
+  const [avisosVersion, setAvisosVersion] = useState(0)
 
   useEffect(() => {
     api('/negocios/mio')
@@ -130,6 +133,29 @@ export default function NegocioArea() {
     )
     return () => navigator.geolocation.clearWatch(vigilancia)
   }, [activo])
+
+  const revisarAvisos = useCallback(async () => {
+    if (!aprobado) return
+    try {
+      const sinLeer = (await api('/notificaciones')).filter((n) => !n.pedido && !n.leida)
+      if (avisosVistos.current !== null && sinLeer.length > avisosVistos.current) {
+        sonarAviso()
+        mostrar(sinLeer[0].titulo)
+        notificarSistema(sinLeer[0].titulo, sinLeer[0].mensaje)
+        setAvisosVersion((v) => v + 1)
+      }
+      avisosVistos.current = sinLeer.length
+      setAvisosSinLeer(sinLeer.length)
+    } catch {
+      return
+    }
+  }, [aprobado, mostrar])
+
+  useEffect(() => {
+    revisarAvisos()
+    const intervalo = setInterval(revisarAvisos, 15000)
+    return () => clearInterval(intervalo)
+  }, [revisarAvisos])
 
   const recargar = useCallback(async () => {
     if (!aprobado) return
@@ -212,12 +238,13 @@ export default function NegocioArea() {
     { ruta: '/negocio', texto: 'Pedidos', icono: ClipboardList, exacto: true, globo: nuevos },
     { ruta: '/negocio/menu', texto: 'Menú', icono: UtensilsCrossed },
     { ruta: '/negocio/ventas', texto: 'Ventas', icono: BarChart3 },
+    { ruta: '/negocio/avisos', texto: 'Avisos', icono: Bell, globo: avisosSinLeer },
     { ruta: '/negocio/puesto', texto: 'Mi puesto', icono: Store }
   ]
 
   return (
     <NegocioContexto.Provider
-      value={{ negocio, setNegocio, pedidos, cargandoPedidos, recargar, reemplazar, recientes, setAlerta, compartir, setCompartir, errorGps }}
+      value={{ negocio, setNegocio, pedidos, cargandoPedidos, avisosVersion, revisarAvisos, recargar, reemplazar, recientes, setAlerta, compartir, setCompartir, errorGps }}
     >
       <Marco
         rol="negocio"
